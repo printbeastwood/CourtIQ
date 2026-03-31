@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: courtiq-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: courtiq
+      POSTGRES_PASSWORD: courtiq_dev
+      POSTGRES_DB: courtiq
+    volumes:
+      - courtiq_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U courtiq"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  courtiq_pgdata:

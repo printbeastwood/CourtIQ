@@ -9,11 +9,16 @@
   ],
   "scripts": {
     "dev": "turbo dev",
+    "dev:api": "turbo dev --filter=@courtiq/api",
+    "dev:dashboard": "turbo dev --filter=venue-dashboard",
     "build": "turbo build",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "setup": "bash scripts/setup.sh",
+    "db:push": "cd packages/db && npx drizzle-kit push --force",
+    "db:seed": "npx tsx packages/db/src/seed.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
