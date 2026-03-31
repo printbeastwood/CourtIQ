@@ -32,6 +32,8 @@
       "expo-router",
       "expo-secure-store",
       "expo-location",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
       [
         "expo-splash-screen",
         {
@@ -41,6 +43,9 @@
         }
       ]
     ],
+    "web": {
+      "favicon": "./assets/icon.png"
+    },
     "experiments": {
       "typedRoutes": true
     }

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1284 2778" fill="none">
+  <!-- CourtIQ Splash Screen (iPhone 15 Pro Max dimensions) -->
+  <!-- Dark background -->
+  <rect width="1284" height="2778" fill="#0F172A"/>
+  <!-- Subtle court lines pattern in background -->
+  <g opacity="0.06">
+    <line x1="642" y1="600" x2="642" y2="2178" stroke="white" stroke-width="4"/>
+    <line x1="342" y1="1389" x2="942" y2="1389" stroke="white" stroke-width="3"/>
+    <rect x="342" y="900" width="600" height="978" rx="40" stroke="white" stroke-width="3" fill="none"/>
+  </g>
+  <!-- Centred icon mark -->
+  <g transform="translate(546, 1143)">
+    <!-- Court icon at 192px -->
+    <rect width="192" height="192" rx="40" fill="#2563EB"/>
+    <rect x="30" y="30" width="132" height="132" rx="16" fill="#1D4ED8" opacity="0.5"/>
+    <line x1="96" y1="42" x2="96" y2="150" stroke="white" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+    <line x1="42" y1="96" x2="150" y2="96" stroke="white" stroke-width="5" stroke-linecap="round" opacity="0.3"/>
+    <rect x="42" y="54" width="108" height="84" rx="10" stroke="white" stroke-width="4" fill="none" opacity="0.25"/>
+    <circle cx="143" cy="49" r="16.5" fill="#60A5FA"/>
+    <circle cx="143" cy="49" r="8.5" fill="white"/>
+    <circle cx="143" cy="49" r="3" fill="#2563EB"/>
+  </g>
+  <!-- Wordmark below icon -->
+  <text x="642" y="1440" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="52" fill="white" letter-spacing="-0.5">
+    <tspan font-weight="400">Court</tspan><tspan font-weight="700" fill="#60A5FA">IQ</tspan>
+  </text>
+  <!-- Tagline -->
+  <text x="642" y="1490" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" fill="#94A3B8" letter-spacing="2" font-weight="500">YOUR AI PADEL CONCIERGE</text>
+</svg>

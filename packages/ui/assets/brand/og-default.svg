@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <!-- Open Graph default share image (1200x630) -->
+  <rect width="1200" height="630" fill="#0F172A"/>
+  <!-- Subtle court pattern -->
+  <g opacity="0.05">
+    <line x1="600" y1="60" x2="600" y2="570" stroke="white" stroke-width="3"/>
+    <line x1="300" y1="315" x2="900" y2="315" stroke="white" stroke-width="2"/>
+    <rect x="300" y="120" width="600" height="390" rx="20" stroke="white" stroke-width="2" fill="none"/>
+  </g>
+  <!-- Icon mark -->
+  <g transform="translate(460, 160)">
+    <rect width="80" height="80" rx="18" fill="#2563EB"/>
+    <rect x="12" y="12" width="56" height="56" rx="8" fill="#1D4ED8" opacity="0.5"/>
+    <line x1="40" y1="18" x2="40" y2="62" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+    <line x1="18" y1="40" x2="62" y2="40" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+    <rect x="18" y="22" width="44" height="36" rx="5" stroke="white" stroke-width="2" fill="none" opacity="0.25"/>
+    <circle cx="58" cy="20" r="7" fill="#60A5FA"/>
+    <circle cx="58" cy="20" r="3.5" fill="white"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="556" y="224" font-family="-apple-system, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="56" fill="white" letter-spacing="-0.5">
+    <tspan font-weight="400">Court</tspan><tspan font-weight="700" fill="#60A5FA">IQ</tspan>
+  </text>
+  <!-- Tagline -->
+  <text x="600" y="330" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="26" fill="#CBD5E1" font-weight="400">Your AI Padel Concierge</text>
+  <!-- Description -->
+  <text x="600" y="390" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" fill="#64748B">Find and book the perfect padel court in Bangkok</text>
+  <!-- Bottom accent -->
+  <rect x="0" y="620" width="1200" height="10" fill="#2563EB"/>
+</svg>

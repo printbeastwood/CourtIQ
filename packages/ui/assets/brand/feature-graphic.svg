@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 500" fill="none">
+  <!-- App Store / Play Store feature graphic (1024x500) -->
+  <rect width="1024" height="500" fill="#0F172A"/>
+  <!-- Background court pattern -->
+  <g opacity="0.04">
+    <line x1="512" y1="20" x2="512" y2="480" stroke="white" stroke-width="3"/>
+    <line x1="212" y1="250" x2="812" y2="250" stroke="white" stroke-width="2"/>
+    <rect x="212" y="80" width="600" height="340" rx="20" stroke="white" stroke-width="2" fill="none"/>
+  </g>
+  <!-- Brand gradient glow -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#2563EB" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#0F172A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="500" fill="url(#glow)"/>
+  <!-- Icon -->
+  <g transform="translate(412, 100)">
+    <rect width="100" height="100" rx="22" fill="#2563EB"/>
+    <rect x="15" y="15" width="70" height="70" rx="10" fill="#1D4ED8" opacity="0.5"/>
+    <line x1="50" y1="22" x2="50" y2="78" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+    <line x1="22" y1="50" x2="78" y2="50" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.3"/>
+    <rect x="22" y="28" width="56" height="44" rx="6" stroke="white" stroke-width="2.5" fill="none" opacity="0.25"/>
+    <circle cx="72" cy="26" r="9" fill="#60A5FA"/>
+    <circle cx="72" cy="26" r="4.5" fill="white"/>
+    <circle cx="72" cy="26" r="1.5" fill="#2563EB"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="512" y="270" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="48" fill="white" letter-spacing="-0.5">
+    <tspan font-weight="400">Court</tspan><tspan font-weight="700" fill="#60A5FA">IQ</tspan>
+  </text>
+  <!-- Tagline -->
+  <text x="512" y="310" text-anchor="middle" font-family="-apple-system, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" fill="#94A3B8" letter-spacing="1.5" font-weight="500">YOUR AI PADEL CONCIERGE</text>
+  <!-- Feature bullets -->
+  <g font-family="-apple-system, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" fill="#64748B" text-anchor="middle">
+    <text x="300" y="390">All Courts, One App</text>
+    <text x="512" y="390">AI Recommendations</text>
+    <text x="724" y="390">Book Instantly</text>
+  </g>
+  <!-- Feature dots -->
+  <circle cx="300" cy="365" r="3" fill="#60A5FA"/>
+  <circle cx="512" cy="365" r="3" fill="#22C55E"/>
+  <circle cx="724" cy="365" r="3" fill="#F59E0B"/>
+  <!-- Bottom accent line -->
+  <rect x="0" y="493" width="1024" height="7" fill="#2563EB"/>
+</svg>

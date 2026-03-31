@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- CourtIQ Icon Mark (Square, for app icon and favicons) -->
+  <!-- Background -->
+  <rect width="512" height="512" rx="108" fill="#2563EB"/>
+  <!-- Court surface lines - subtle depth -->
+  <rect x="80" y="80" width="352" height="352" rx="40" fill="#1D4ED8" opacity="0.5"/>
+  <!-- Centre line -->
+  <line x1="256" y1="112" x2="256" y2="400" stroke="white" stroke-width="16" stroke-linecap="round" opacity="0.5"/>
+  <!-- Service line horizontal -->
+  <line x1="112" y1="256" x2="400" y2="256" stroke="white" stroke-width="12" stroke-linecap="round" opacity="0.3"/>
+  <!-- Service boxes -->
+  <rect x="112" y="144" width="288" height="224" rx="24" stroke="white" stroke-width="10" fill="none" opacity="0.25"/>
+  <!-- Smart spark / IQ indicator -->
+  <circle cx="380" cy="132" r="44" fill="#60A5FA"/>
+  <circle cx="380" cy="132" r="22" fill="white"/>
+  <!-- Inner dot -->
+  <circle cx="380" cy="132" r="8" fill="#2563EB"/>
+</svg>
