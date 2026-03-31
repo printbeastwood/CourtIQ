@@ -3,9 +3,22 @@ import { View, Text, ScrollView, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  Card,
+  Badge,
+  SurfaceBadge,
+  SlotPicker,
+  Button,
+  type TimeSlot,
+  CourtIcon,
+} from "@courtiq/ui";
 import { fetchVenueDetail, fetchVenueSlots } from "../../src/lib/api";
-import { formatPrice, formatTime, surfaceLabel, surfaceColor } from "../../src/lib/format";
+import {
+  formatPrice,
+  formatTime,
+  surfaceLabel,
+  surfaceColor,
+} from "../../src/lib/format";
 import { LoadingScreen } from "../../src/components/LoadingScreen";
 import { ErrorView } from "../../src/components/ErrorView";
 
@@ -16,14 +29,15 @@ export default function VenueDetailScreen() {
 
   const today = new Date().toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState(today);
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
 
-  // Generate next 7 days for date picker
   const dates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
     return {
       value: d.toISOString().split("T")[0],
-      label: d.toLocaleDateString([], { weekday: "short", day: "numeric" }),
+      dayName: d.toLocaleDateString([], { weekday: "short" }),
+      dayNum: d.getDate(),
       isToday: i === 0,
     };
   });
@@ -53,128 +67,158 @@ export default function VenueDetailScreen() {
   const venue = venueQuery.data?.venue;
   if (!venue) return <ErrorView message="Venue not found" />;
 
-  const slots = slotsQuery.data?.slots ?? [];
+  const rawSlots = slotsQuery.data?.slots ?? [];
+  const slotPickerData: TimeSlot[] = rawSlots.map((r) => ({
+    id: r.slot.id,
+    startsAt: r.slot.startsAt,
+    endsAt: r.slot.endsAt,
+    available: r.slot.status === "available",
+    priceCents: r.slot.priceCents,
+    currency: r.slot.currency,
+  }));
 
   return (
-    <ScrollView className="flex-1 bg-slate-50">
-      {/* Venue header */}
-      <View className="bg-brand-950 pt-24 pb-8 px-4">
-        <Text className="text-3xl font-bold text-white">{venue.name}</Text>
-        <Text className="text-brand-300 mt-1">{venue.address}</Text>
-      </View>
-
-      {/* Courts */}
-      <View className="px-4 pt-4">
-        <Text className="text-lg font-semibold text-gray-900 mb-3">
-          {t("venue.courts")} ({venue.courts.length})
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
-          {venue.courts.map((court) => (
-            <View
-              key={court.id}
-              className="bg-white rounded-xl p-3 mr-3 w-36 border border-gray-100"
-            >
-              <Text className="font-medium text-gray-900">{court.name}</Text>
-              <View className="flex-row items-center mt-1">
-                <View
-                  className="w-2 h-2 rounded-full mr-1.5"
-                  style={{ backgroundColor: surfaceColor(court.surface) }}
-                />
-                <Text className="text-xs text-gray-500">
-                  {surfaceLabel(court.surface)}
-                </Text>
-              </View>
-              <Text className="text-xs text-gray-400 mt-0.5">
-                {court.indoor ? "Indoor" : "Outdoor"}
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
-
-        {/* Amenities */}
-        {venue.amenities.length > 0 && (
-          <View className="mb-4">
-            <Text className="text-lg font-semibold text-gray-900 mb-2">
-              {t("venue.amenities")}
-            </Text>
-            <View className="flex-row flex-wrap gap-2">
-              {venue.amenities.map((a) => (
-                <View key={a} className="bg-brand-50 px-3 py-1.5 rounded-full">
-                  <Text className="text-sm text-brand-700">{a}</Text>
-                </View>
-              ))}
-            </View>
+    <View className="flex-1 bg-slate-50">
+      <ScrollView className="flex-1">
+        {/* Hero */}
+        <View className="bg-brand-950 pt-28 pb-6 px-5">
+          <Text className="text-3xl font-extrabold text-white">{venue.name}</Text>
+          <Text className="text-brand-300 mt-1.5 text-sm">{venue.address}</Text>
+          <View className="flex-row flex-wrap gap-1.5 mt-3">
+            {venue.amenities.map((a) => (
+              <Badge key={a} variant="brand">
+                {a}
+              </Badge>
+            ))}
           </View>
-        )}
+        </View>
 
-        {/* Date picker */}
-        <Text className="text-lg font-semibold text-gray-900 mb-3">
-          {t("venue.available_slots")}
-        </Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mb-4"
-        >
-          {dates.map((d) => (
-            <Pressable
-              key={d.value}
-              className={`px-4 py-2 mr-2 rounded-xl ${
-                selectedDate === d.value
-                  ? "bg-brand-600"
-                  : "bg-white border border-gray-200"
-              }`}
-              onPress={() => setSelectedDate(d.value)}
-            >
-              <Text
-                className={`text-sm font-medium ${
-                  selectedDate === d.value ? "text-white" : "text-gray-700"
-                }`}
-              >
-                {d.isToday ? "Today" : d.label}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-
-        {/* Slots */}
-        {slotsQuery.isLoading && (
-          <Text className="text-center text-gray-400 py-8">
-            {t("common.loading")}
+        <View className="px-5 pt-5">
+          {/* Courts section */}
+          <Text className="text-lg font-semibold text-gray-900 mb-3">
+            Courts ({venue.courts.length})
           </Text>
-        )}
-
-        {slots.map((r) => (
-          <Pressable
-            key={r.slot.id}
-            className="bg-white rounded-xl p-4 mb-2 border border-gray-100 flex-row justify-between items-center"
-            onPress={() => router.push(`/booking/${r.slot.id}`)}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mb-5"
+            contentContainerStyle={{ gap: 10 }}
           >
-            <View>
-              <Text className="text-base font-semibold text-gray-900">
-                {formatTime(r.slot.startsAt)} – {formatTime(r.slot.endsAt)}
-              </Text>
-              <Text className="text-sm text-gray-500">{r.court.name}</Text>
-            </View>
-            <View className="items-end">
-              <Text className="text-lg font-bold text-brand-600">
-                {formatPrice(r.slot.priceCents, r.slot.currency)}
-              </Text>
-              <Text className="text-xs text-gray-400">
-                {t("venue.per_hour")}
-              </Text>
-            </View>
-          </Pressable>
-        ))}
+            {venue.courts.map((court) => (
+              <View key={court.id} className="w-36">
+                <Card variant="elevated" padded>
+                  <Text className="font-semibold text-gray-900 text-sm">
+                    {court.name}
+                  </Text>
+                  <View className="mt-2 gap-1.5">
+                    <SurfaceBadge surface={court.surface as any} />
+                    <Badge variant="default">
+                      {court.indoor ? "Indoor" : "Outdoor"}
+                    </Badge>
+                  </View>
+                </Card>
+              </View>
+            ))}
+          </ScrollView>
 
-        {!slotsQuery.isLoading && slots.length === 0 && (
-          <Text className="text-center text-gray-400 py-8">
-            No slots available for this date
+          {/* Date picker */}
+          <Text className="text-lg font-semibold text-gray-900 mb-3">
+            Available Slots
           </Text>
-        )}
-      </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mb-4"
+            contentContainerStyle={{ gap: 8 }}
+          >
+            {dates.map((d) => (
+              <Pressable
+                key={d.value}
+                className={`w-14 items-center py-2.5 rounded-xl border ${
+                  selectedDate === d.value
+                    ? "bg-brand-600 border-brand-600"
+                    : "bg-white border-gray-200"
+                }`}
+                onPress={() => {
+                  setSelectedDate(d.value);
+                  setSelectedSlot(null);
+                }}
+              >
+                <Text
+                  className={`text-xs font-medium ${
+                    selectedDate === d.value ? "text-brand-100" : "text-gray-400"
+                  }`}
+                >
+                  {d.isToday ? "Today" : d.dayName}
+                </Text>
+                <Text
+                  className={`text-lg font-bold mt-0.5 ${
+                    selectedDate === d.value ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {d.dayNum}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
 
-      <View className="h-8" />
-    </ScrollView>
+          {/* Slot picker */}
+          {slotsQuery.isLoading && (
+            <View className="items-center py-12">
+              <Text className="text-gray-400">{t("common.loading")}</Text>
+            </View>
+          )}
+
+          {!slotsQuery.isLoading && slotPickerData.length > 0 && (
+            <SlotPicker
+              slots={slotPickerData}
+              selectedId={selectedSlot?.id ?? null}
+              onSelect={(slot) => setSelectedSlot(slot)}
+              formatTime={(iso) => formatTime(iso)}
+              formatPrice={(cents, currency) => formatPrice(cents, currency)}
+            />
+          )}
+
+          {!slotsQuery.isLoading && slotPickerData.length === 0 && (
+            <View className="items-center py-12">
+              <CourtIcon size={36} color="#CBD5E1" />
+              <Text className="text-gray-400 mt-2">
+                No slots available for this date
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View className="h-24" />
+      </ScrollView>
+
+      {/* Sticky book button */}
+      {selectedSlot && (
+        <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 py-4 pb-8">
+          <View className="flex-row items-center justify-between mb-3">
+            <View>
+              <Text className="text-sm text-gray-500">
+                {formatTime(selectedSlot.startsAt)} –{" "}
+                {formatTime(selectedSlot.endsAt)}
+              </Text>
+            </View>
+            <Text className="text-xl font-bold text-brand-600">
+              {formatPrice(
+                selectedSlot.priceCents ?? 0,
+                selectedSlot.currency ?? "THB",
+              )}
+            </Text>
+          </View>
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            onPress={() => router.push(`/booking/${selectedSlot.id}`)}
+          >
+            Book this slot
+          </Button>
+        </View>
+      )}
+    </View>
   );
 }

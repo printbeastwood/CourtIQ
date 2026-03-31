@@ -1,37 +1,53 @@
-import { useState, useRef } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  TextInput,
-  Dimensions,
-} from "react-native";
+import { useState } from "react";
+import { View, Text, Pressable, TextInput } from "react-native";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import Animated, { FadeInRight, FadeOutLeft } from "react-native-reanimated";
+import Animated, {
+  FadeInRight,
+  FadeOutLeft,
+  FadeInUp,
+} from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Button, RacketIcon } from "@courtiq/ui";
 import { useAuthStore } from "../src/stores/auth";
 import { storePreferences } from "../src/lib/api";
 
-const { width } = Dimensions.get("window");
-
-const SKILL_LEVELS = ["Beginner", "Intermediate", "Advanced", "Pro"];
-const PLAY_STYLES = [
-  "Casual rallies",
-  "Competitive matches",
-  "Training & drills",
-  "Social games",
+const SKILL_LEVELS = [
+  { label: "Beginner", desc: "Just starting out" },
+  { label: "Intermediate", desc: "Know the basics, improving my game" },
+  { label: "Advanced", desc: "Consistent player, competitive level" },
+  { label: "Pro", desc: "Tournament-level player" },
 ];
-const SURFACES = ["Glass", "Panoramic", "Turf", "No preference"];
-const TIME_PREFS = ["Mornings", "Afternoons", "Evenings", "Weekends only"];
 
-type Step = "skill" | "style" | "surface" | "time" | "extra";
-const STEPS: Step[] = ["skill", "style", "surface", "time", "extra"];
+const PLAY_STYLES = [
+  { label: "Casual rallies", emoji: "🎾" },
+  { label: "Competitive matches", emoji: "🏆" },
+  { label: "Training & drills", emoji: "💪" },
+  { label: "Social games", emoji: "👥" },
+];
+
+const SURFACES = [
+  { label: "Glass", color: "#06B6D4" },
+  { label: "Panoramic", color: "#8B5CF6" },
+  { label: "Turf", color: "#22C55E" },
+  { label: "No preference", color: "#94A3B8" },
+];
+
+const TIME_PREFS = [
+  { label: "Mornings", desc: "6am – 12pm" },
+  { label: "Afternoons", desc: "12pm – 5pm" },
+  { label: "Evenings", desc: "5pm – 10pm" },
+  { label: "Weekends only", desc: "Sat & Sun" },
+];
+
+type Step = "welcome" | "skill" | "style" | "surface" | "time" | "extra";
+const STEPS: Step[] = ["welcome", "skill", "style", "surface", "time", "extra"];
 
 export default function OnboardingScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const userId = useAuthStore((s) => s.userId);
+  const displayName = useAuthStore((s) => s.displayName);
   const setOnboarded = useAuthStore((s) => s.setOnboarded);
   const [stepIndex, setStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string[]>>({
@@ -63,7 +79,6 @@ export default function OnboardingScreen() {
       return;
     }
 
-    // Final step — save preferences and complete onboarding
     setSaving(true);
     try {
       if (userId) {
@@ -76,11 +91,17 @@ export default function OnboardingScreen() {
         }
         for (const surface of selections.surface) {
           if (surface !== "No preference") {
-            prefs.push({ text: `Prefer ${surface.toLowerCase()} courts`, category: "court_surface" });
+            prefs.push({
+              text: `Prefer ${surface.toLowerCase()} courts`,
+              category: "court_surface",
+            });
           }
         }
         for (const time of selections.time) {
-          prefs.push({ text: `Prefer playing ${time.toLowerCase()}`, category: "time" });
+          prefs.push({
+            text: `Prefer playing ${time.toLowerCase()}`,
+            category: "time",
+          });
         }
         if (extraText.trim()) {
           prefs.push({ text: extraText.trim() });
@@ -92,7 +113,6 @@ export default function OnboardingScreen() {
       await setOnboarded(true);
       router.replace("/(tabs)/home");
     } catch {
-      // Still complete onboarding even if preference save fails
       await setOnboarded(true);
       router.replace("/(tabs)/home");
     } finally {
@@ -105,102 +125,278 @@ export default function OnboardingScreen() {
     router.replace("/(tabs)/home");
   };
 
-  const optionsForStep: Record<string, string[]> = {
-    skill: SKILL_LEVELS,
-    style: PLAY_STYLES,
-    surface: SURFACES,
-    time: TIME_PREFS,
+  const handleBack = () => {
+    if (stepIndex > 0) setStepIndex(stepIndex - 1);
   };
 
-  const titlesForStep: Record<string, string> = {
-    skill: t("onboarding.skill_level"),
-    style: t("onboarding.play_style"),
-    surface: "Preferred court surface?",
-    time: "When do you usually play?",
-    extra: t("onboarding.preferences"),
-  };
+  const progressSteps = STEPS.filter((s) => s !== "welcome");
+  const progressIndex = stepIndex - 1;
 
   return (
-    <View className="flex-1 bg-brand-950">
-      <View className="flex-1 justify-center px-8 pt-20">
-        {/* Progress dots */}
-        <View className="flex-row justify-center mb-8 gap-2">
-          {STEPS.map((_, i) => (
-            <View
-              key={i}
-              className={`h-2 rounded-full ${
-                i <= stepIndex ? "bg-brand-500 w-8" : "bg-white/20 w-2"
-              }`}
-            />
-          ))}
-        </View>
-
-        <Animated.View
-          key={step}
-          entering={FadeInRight.duration(300)}
-          exiting={FadeOutLeft.duration(200)}
-        >
-          <Text className="text-2xl font-bold text-white mb-6">
-            {titlesForStep[step]}
-          </Text>
-
-          {step === "extra" ? (
-            <TextInput
-              className="bg-white/10 text-white text-base px-4 py-4 rounded-xl min-h-[120px]"
-              placeholder="e.g. I like playing near Sukhumvit, prefer courts under 500 THB/hr..."
-              placeholderTextColor="#94A3B8"
-              value={extraText}
-              onChangeText={setExtraText}
-              multiline
-              textAlignVertical="top"
-            />
-          ) : (
-            <View className="gap-3">
-              {(optionsForStep[step] ?? []).map((option) => {
-                const selected = (selections[step] ?? []).includes(option);
-                return (
-                  <Pressable
-                    key={option}
-                    className={`px-5 py-4 rounded-xl border ${
-                      selected
-                        ? "bg-brand-500/20 border-brand-500"
-                        : "bg-white/5 border-white/10"
+    <SafeAreaView className="flex-1 bg-brand-950" edges={["top", "bottom"]}>
+      <View className="flex-1 justify-between">
+        {/* Top area */}
+        <View className="flex-1 px-6 pt-4">
+          {/* Back button + progress (hidden on welcome) */}
+          {step !== "welcome" && (
+            <View className="flex-row items-center mb-6">
+              <Pressable onPress={handleBack} className="mr-4 py-2 pr-4">
+                <Text className="text-white text-lg">←</Text>
+              </Pressable>
+              <View className="flex-1 flex-row gap-1.5">
+                {progressSteps.map((_, i) => (
+                  <View
+                    key={i}
+                    className={`h-1 flex-1 rounded-full ${
+                      i <= progressIndex
+                        ? "bg-brand-400"
+                        : "bg-white/10"
                     }`}
-                    onPress={() => toggle(step, option)}
-                  >
-                    <Text
-                      className={`text-base ${
-                        selected ? "text-brand-300 font-semibold" : "text-white"
-                      }`}
-                    >
-                      {option}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+                  />
+                ))}
+              </View>
             </View>
           )}
-        </Animated.View>
-      </View>
 
-      <View className="px-8 pb-12 pt-4">
-        <Pressable
-          className="bg-brand-500 py-4 rounded-xl items-center mb-3"
-          onPress={handleNext}
-          disabled={saving}
-        >
-          <Text className="text-white text-lg font-semibold">
-            {saving
-              ? t("common.loading")
+          <Animated.View
+            key={step}
+            entering={FadeInRight.duration(300)}
+            exiting={FadeOutLeft.duration(200)}
+            className="flex-1"
+          >
+            {step === "welcome" && (
+              <View className="flex-1 justify-center items-center px-4">
+                <Animated.View entering={FadeInUp.delay(100).duration(400)}>
+                  <View className="w-20 h-20 rounded-full bg-brand-500/20 items-center justify-center mb-6 self-center">
+                    <RacketIcon size={40} color="#60A5FA" />
+                  </View>
+                </Animated.View>
+                <Animated.View entering={FadeInUp.delay(250).duration(400)}>
+                  <Text className="text-3xl font-extrabold text-white text-center mb-3">
+                    Welcome{displayName ? `, ${displayName}` : ""}!
+                  </Text>
+                </Animated.View>
+                <Animated.View entering={FadeInUp.delay(400).duration(400)}>
+                  <Text className="text-base text-brand-300 text-center leading-6">
+                    Let's learn how you play so we can find you the perfect
+                    courts in Bangkok. This takes about 30 seconds.
+                  </Text>
+                </Animated.View>
+              </View>
+            )}
+
+            {step === "skill" && (
+              <View>
+                <Text className="text-sm font-semibold text-brand-400 uppercase tracking-wider mb-2">
+                  About you
+                </Text>
+                <Text className="text-2xl font-bold text-white mb-2">
+                  What's your skill level?
+                </Text>
+                <Text className="text-sm text-brand-300/70 mb-6">
+                  This helps us match you with the right games
+                </Text>
+                <View className="gap-3">
+                  {SKILL_LEVELS.map((item) => {
+                    const selected = selections.skill.includes(item.label);
+                    return (
+                      <Pressable
+                        key={item.label}
+                        className={`px-5 py-4 rounded-2xl border ${
+                          selected
+                            ? "bg-brand-500/20 border-brand-400"
+                            : "bg-white/5 border-white/10"
+                        }`}
+                        onPress={() => toggle("skill", item.label)}
+                      >
+                        <Text
+                          className={`text-base font-medium ${
+                            selected ? "text-white" : "text-white/90"
+                          }`}
+                        >
+                          {item.label}
+                        </Text>
+                        <Text className="text-sm text-brand-300/60 mt-0.5">
+                          {item.desc}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {step === "style" && (
+              <View>
+                <Text className="text-sm font-semibold text-brand-400 uppercase tracking-wider mb-2">
+                  Play style
+                </Text>
+                <Text className="text-2xl font-bold text-white mb-2">
+                  How do you like to play?
+                </Text>
+                <Text className="text-sm text-brand-300/70 mb-6">
+                  Pick all that apply
+                </Text>
+                <View className="gap-3">
+                  {PLAY_STYLES.map((item) => {
+                    const selected = selections.style.includes(item.label);
+                    return (
+                      <Pressable
+                        key={item.label}
+                        className={`flex-row items-center px-5 py-4 rounded-2xl border ${
+                          selected
+                            ? "bg-brand-500/20 border-brand-400"
+                            : "bg-white/5 border-white/10"
+                        }`}
+                        onPress={() => toggle("style", item.label)}
+                      >
+                        <Text className="text-2xl mr-4">{item.emoji}</Text>
+                        <Text
+                          className={`text-base font-medium ${
+                            selected ? "text-white" : "text-white/90"
+                          }`}
+                        >
+                          {item.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {step === "surface" && (
+              <View>
+                <Text className="text-sm font-semibold text-brand-400 uppercase tracking-wider mb-2">
+                  Court preference
+                </Text>
+                <Text className="text-2xl font-bold text-white mb-2">
+                  Preferred court surface?
+                </Text>
+                <Text className="text-sm text-brand-300/70 mb-6">
+                  We'll prioritize these in your recommendations
+                </Text>
+                <View className="gap-3">
+                  {SURFACES.map((item) => {
+                    const selected = selections.surface.includes(item.label);
+                    return (
+                      <Pressable
+                        key={item.label}
+                        className={`flex-row items-center px-5 py-4 rounded-2xl border ${
+                          selected
+                            ? "bg-brand-500/20 border-brand-400"
+                            : "bg-white/5 border-white/10"
+                        }`}
+                        onPress={() => toggle("surface", item.label)}
+                      >
+                        <View
+                          className="w-3 h-3 rounded-full mr-4"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <Text
+                          className={`text-base font-medium ${
+                            selected ? "text-white" : "text-white/90"
+                          }`}
+                        >
+                          {item.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {step === "time" && (
+              <View>
+                <Text className="text-sm font-semibold text-brand-400 uppercase tracking-wider mb-2">
+                  Schedule
+                </Text>
+                <Text className="text-2xl font-bold text-white mb-2">
+                  When do you usually play?
+                </Text>
+                <Text className="text-sm text-brand-300/70 mb-6">
+                  Pick all that apply
+                </Text>
+                <View className="gap-3">
+                  {TIME_PREFS.map((item) => {
+                    const selected = selections.time.includes(item.label);
+                    return (
+                      <Pressable
+                        key={item.label}
+                        className={`px-5 py-4 rounded-2xl border ${
+                          selected
+                            ? "bg-brand-500/20 border-brand-400"
+                            : "bg-white/5 border-white/10"
+                        }`}
+                        onPress={() => toggle("time", item.label)}
+                      >
+                        <Text
+                          className={`text-base font-medium ${
+                            selected ? "text-white" : "text-white/90"
+                          }`}
+                        >
+                          {item.label}
+                        </Text>
+                        <Text className="text-sm text-brand-300/60 mt-0.5">
+                          {item.desc}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {step === "extra" && (
+              <View>
+                <Text className="text-sm font-semibold text-brand-400 uppercase tracking-wider mb-2">
+                  Almost done
+                </Text>
+                <Text className="text-2xl font-bold text-white mb-2">
+                  {t("onboarding.preferences")}
+                </Text>
+                <Text className="text-sm text-brand-300/70 mb-6">
+                  Tell us anything else — budget, area, group size, whatever matters
+                </Text>
+                <TextInput
+                  className="bg-white/10 text-white text-base px-5 py-4 rounded-2xl min-h-[140px] border border-white/10"
+                  placeholder="e.g. I like playing near Sukhumvit, prefer courts under 500 THB/hr, usually play with 3 friends..."
+                  placeholderTextColor="#64748B"
+                  value={extraText}
+                  onChangeText={setExtraText}
+                  multiline
+                  textAlignVertical="top"
+                />
+              </View>
+            )}
+          </Animated.View>
+        </View>
+
+        {/* Bottom actions */}
+        <View className="px-6 pb-4 pt-2">
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            loading={saving}
+            onPress={handleNext}
+          >
+            {step === "welcome"
+              ? "Let's go"
               : stepIndex === STEPS.length - 1
                 ? t("onboarding.done")
                 : t("onboarding.next")}
-          </Text>
-        </Pressable>
-        <Pressable className="items-center py-2" onPress={handleSkip}>
-          <Text className="text-brand-400">{t("onboarding.skip")}</Text>
-        </Pressable>
+          </Button>
+          {step !== "welcome" && (
+            <Pressable className="items-center py-3 mt-1" onPress={handleSkip}>
+              <Text className="text-brand-400 text-sm">
+                {t("onboarding.skip")}
+              </Text>
+            </Pressable>
+          )}
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
