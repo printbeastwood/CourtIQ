@@ -1,7 +1,7 @@
 export type SurfaceType = "glass" | "panoramic" | "concrete" | "turf";
 export type SlotStatus = "available" | "held" | "booked";
 export type Currency = "THB" | "USD" | "EUR";
-export type Platform = "playtomic" | "reclub" | "book_and_go" | "matchi" | "club_direct";
+export type Platform = "playtomic" | "reclub" | "book_and_go" | "matchi" | "padel_mates" | "padel_society" | "club_direct";
 
 export interface Coordinates {
   lat: number;
