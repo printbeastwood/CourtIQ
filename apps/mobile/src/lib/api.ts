@@ -19,6 +19,21 @@ async function request<T>(
     headers,
   });
 
+  // On 401, attempt a single token refresh and retry
+  if (res.status === 401 && token) {
+    const newToken = await useAuthStore.getState().refreshToken();
+    if (newToken) {
+      headers["Authorization"] = `Bearer ${newToken}`;
+      const retry = await fetch(`${config.apiUrl}${path}`, {
+        ...options,
+        headers,
+      });
+      if (retry.ok) return retry.json() as Promise<T>;
+      const retryBody = await retry.text();
+      throw new Error(`API ${retry.status}: ${retryBody}`);
+    }
+  }
+
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`API ${res.status}: ${body}`);

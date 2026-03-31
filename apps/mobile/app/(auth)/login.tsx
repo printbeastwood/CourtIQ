@@ -6,9 +6,18 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { sendOtp, FirebaseAuthTypes } from "../../src/lib/firebase";
+
+// Module-level ref so verify screen can access the confirmation result.
+// This avoids serialising it through navigation params.
+let _confirmation: FirebaseAuthTypes.ConfirmationResult | null = null;
+export function getConfirmation() {
+  return _confirmation;
+}
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -20,9 +29,12 @@ export default function LoginScreen() {
     if (phone.length < 10) return;
     setLoading(true);
     try {
-      // TODO: integrate Firebase Auth signInWithPhoneNumber
-      // For now, navigate to verify screen with phone as param
+      _confirmation = await sendOtp(phone);
       router.push({ pathname: "/(auth)/verify", params: { phone } });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to send OTP";
+      Alert.alert(t("common.error"), message);
     } finally {
       setLoading(false);
     }

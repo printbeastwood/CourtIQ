@@ -6,10 +6,12 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../../src/stores/auth";
+import { getConfirmation } from "./login";
 
 export default function VerifyScreen() {
   const { t } = useTranslation();
@@ -23,18 +25,40 @@ export default function VerifyScreen() {
     if (code.length !== 6) return;
     setLoading(true);
     try {
-      // TODO: integrate Firebase Auth confirmationResult.confirm(code)
-      // For now, simulate successful auth
+      const confirmation = getConfirmation();
+      if (!confirmation) {
+        Alert.alert(t("common.error"), "Session expired. Please try again.");
+        router.replace("/(auth)/login");
+        return;
+      }
+
+      const credential = await confirmation.confirm(code);
+      const user = credential?.user;
+      if (!user) {
+        Alert.alert(t("common.error"), "Verification failed.");
+        return;
+      }
+
+      const idToken = await user.getIdToken();
       await setAuth({
-        token: "demo-jwt-token",
-        userId: "00000000-0000-0000-0000-000000000001",
-        phone: phone ?? "+66000000000",
-        displayName: undefined,
+        token: idToken,
+        userId: user.uid,
+        phone: user.phoneNumber ?? phone ?? "",
+        displayName: user.displayName ?? undefined,
       });
+
       router.replace("/onboarding");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Invalid verification code";
+      Alert.alert(t("common.error"), message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResend = () => {
+    router.replace({ pathname: "/(auth)/login" });
   };
 
   return (
@@ -73,7 +97,7 @@ export default function VerifyScreen() {
           </Text>
         </Pressable>
 
-        <Pressable className="mt-4 items-center" onPress={() => {}}>
+        <Pressable className="mt-4 items-center" onPress={handleResend}>
           <Text className="text-brand-400">{t("auth.resend")}</Text>
         </Pressable>
       </View>

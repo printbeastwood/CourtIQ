@@ -3,7 +3,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useAuthStore } from "../src/stores/auth";
+import { useAuthStore, subscribeToAuthState } from "../src/stores/auth";
 import { useLocationStore } from "../src/stores/location";
 import "../src/i18n";
 import "../global.css";
@@ -25,6 +25,8 @@ export default function RootLayout() {
   useEffect(() => {
     hydrate();
     requestLocation();
+    const unsubscribe = subscribeToAuthState();
+    return () => { unsubscribe(); };
   }, [hydrate, requestLocation]);
 
   return (
