@@ -190,3 +190,41 @@ export interface MatchWithPlayers {
   player2: { id: string; displayName?: string };
   ratingChange?: number;
 }
+
+// Post-match feedback types
+
+export type Satisfaction = "great" | "okay" | "poor";
+export type IssueCategory = "court_quality" | "opponent_level" | "time" | "location";
+export type OpponentSkillRating = "too_easy" | "about_right" | "too_hard";
+
+export interface MatchFeedback {
+  id?: string;
+  matchId?: string;
+  bookingId?: string;
+  playerId: string;
+  satisfaction: Satisfaction;
+  freeText?: string;
+  issueCategories: IssueCategory[];
+  opponentSkillRating?: OpponentSkillRating;
+  opponentId?: string;
+  preferenceExtracted: boolean;
+  createdAt?: Date;
+}
+
+export interface MatchFeedbackInput {
+  matchId?: string;
+  bookingId?: string;
+  satisfaction: Satisfaction;
+  freeText?: string;
+  issueCategories?: IssueCategory[];
+  opponentSkillRating?: OpponentSkillRating;
+  opponentId?: string;
+}
+
+export interface FeedbackStats {
+  total: number;
+  great: number;
+  okay: number;
+  poor: number;
+  satisfactionRate: number; // percentage of "great" ratings
+}

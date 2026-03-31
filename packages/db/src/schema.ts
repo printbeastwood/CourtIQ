@@ -214,6 +214,31 @@ export const ratingHistory = pgTable(
   ]
 );
 
+export const matchFeedback = pgTable(
+  "match_feedback",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    matchId: uuid("match_id").references(() => matches.id),
+    bookingId: uuid("booking_id").references(() => bookings.id),
+    playerId: uuid("player_id")
+      .references(() => users.id)
+      .notNull(),
+    satisfaction: text("satisfaction").notNull(), // great, okay, poor
+    freeText: text("free_text"),
+    issueCategories: jsonb("issue_categories").$type<string[]>().default([]), // court_quality, opponent_level, time, location
+    opponentSkillRating: text("opponent_skill_rating"), // too_easy, about_right, too_hard
+    opponentId: uuid("opponent_id").references(() => users.id),
+    preferenceExtracted: boolean("preference_extracted").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_feedback_player").on(t.playerId),
+    index("idx_feedback_match").on(t.matchId),
+    index("idx_feedback_booking").on(t.bookingId),
+    index("idx_feedback_created").on(t.createdAt),
+  ]
+);
+
 export const adapterHealthLog = pgTable("adapter_health_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   platform: text("platform").notNull(),

@@ -40,5 +40,8 @@ COPY --from=builder /app/packages/concierge/dist ./packages/concierge/dist
 COPY --from=builder /app/packages/concierge/package.json ./packages/concierge/
 COPY --from=builder /app/package.json ./
 
+# Migration SQL files (needed for release_command)
+COPY --from=builder /app/packages/db/drizzle ./packages/db/drizzle
+
 EXPOSE 3000
 CMD ["node", "apps/api/dist/index.js"]

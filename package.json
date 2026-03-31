@@ -18,7 +18,8 @@
     "typecheck": "turbo typecheck",
     "setup": "bash scripts/setup.sh",
     "db:push": "cd packages/db && npx drizzle-kit push --force",
-    "db:seed": "npx tsx packages/db/src/seed.ts"
+    "db:seed": "npx tsx packages/db/src/seed.ts",
+    "db:migrate": "node packages/db/dist/migrate.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
