@@ -186,6 +186,76 @@ export function deletePreference(userId: string, prefId: string) {
   return api.delete(`/users/${userId}/preferences/${prefId}`);
 }
 
+// --- Bookings ---
+
+export interface RedirectBookingResponse {
+  booking: {
+    id: string;
+    status: string;
+    bookingMethod: string;
+    createdAt: string;
+  };
+  bookingUrl: string;
+  slot: {
+    id: string;
+    startsAt: string;
+    endsAt: string;
+    priceCents: number;
+    currency: string;
+  };
+  court: {
+    id: string;
+    name: string;
+    surface: string;
+    indoor: boolean;
+  };
+  venue: {
+    id: string;
+    name: string;
+    sourcePlatform: string;
+  };
+}
+
+export interface BookingListItem {
+  id: string;
+  status: "pending" | "confirmed" | "cancelled";
+  bookingMethod: string;
+  createdAt: string;
+  slot: {
+    startsAt: string;
+    endsAt: string;
+    priceCents: number;
+    currency: string;
+    sourceBookingUrl: string;
+  };
+  venue: {
+    id: string;
+    name: string;
+    sourcePlatform: string;
+  };
+  court: {
+    id: string;
+    name: string;
+    surface: string;
+    indoor: boolean;
+  };
+}
+
+export function createRedirectBooking(slotId: string) {
+  return api.post<RedirectBookingResponse>("/bookings/redirect", { slotId });
+}
+
+export function confirmBooking(bookingId: string, status: "confirmed" | "cancelled") {
+  return api.patch<{ booking: { id: string; status: string } }>(
+    `/bookings/${bookingId}/confirm`,
+    { status },
+  );
+}
+
+export function fetchBookings() {
+  return api.get<{ bookings: BookingListItem[] }>("/bookings");
+}
+
 // --- Concierge ---
 
 export function createConversation(userId: string) {

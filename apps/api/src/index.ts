@@ -16,6 +16,7 @@ import { slotRoutes } from "./routes/slots.js";
 import { healthRoutes } from "./routes/health.js";
 import { preferenceRoutes } from "./routes/preferences.js";
 import { conciergeRoutes } from "./routes/concierge.js";
+import { bookingRoutes } from "./routes/bookings.js";
 
 const DATABASE_URL = process.env["DATABASE_URL"];
 if (!DATABASE_URL) {
@@ -72,6 +73,7 @@ await app.register(
     await protectedScope.register(venueRoutes(db));
     await protectedScope.register(slotRoutes(db));
     await protectedScope.register(healthRoutes(db));
+    await protectedScope.register(bookingRoutes(db));
 
     if (preferenceStore) {
       await protectedScope.register(preferenceRoutes(preferenceStore));

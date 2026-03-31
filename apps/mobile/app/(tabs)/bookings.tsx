@@ -1,35 +1,27 @@
-import { View, Text, ScrollView, RefreshControl } from "react-native";
+import { View, Text, ScrollView, RefreshControl, Linking, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { Card, Badge, SurfaceBadge, CourtIcon } from "@courtiq/ui";
-import { api } from "../../src/lib/api";
+import { fetchBookings, type BookingListItem } from "../../src/lib/api";
 import { useAuthStore } from "../../src/stores/auth";
 import { formatDate, formatTime, formatPrice } from "../../src/lib/format";
-
-interface Booking {
-  id: string;
-  status: "pending" | "confirmed" | "cancelled";
-  slot: {
-    startsAt: string;
-    endsAt: string;
-    priceCents: number;
-    currency: string;
-  };
-  venue: {
-    name: string;
-  };
-  court: {
-    name: string;
-    surface: string;
-  };
-}
 
 const STATUS_VARIANT: Record<string, "warning" | "success" | "error"> = {
   pending: "warning",
   confirmed: "success",
   cancelled: "error",
+};
+
+const PLATFORM_LABELS: Record<string, string> = {
+  playtomic: "Playtomic",
+  reclub: "Reclub",
+  matchi: "MATCHi",
+  book_and_go: "Book & Go",
+  padel_mates: "Padel Mates",
+  padel_society: "Padel Society",
+  club_direct: "Venue Website",
 };
 
 export default function BookingsScreen() {
@@ -38,9 +30,7 @@ export default function BookingsScreen() {
 
   const bookingsQuery = useQuery({
     queryKey: ["bookings", userId],
-    queryFn: async () => {
-      return { bookings: [] as Booking[] };
-    },
+    queryFn: fetchBookings,
     enabled: !!userId,
   });
 
@@ -63,7 +53,7 @@ export default function BookingsScreen() {
           />
         }
       >
-        {bookings.length === 0 && (
+        {bookings.length === 0 && !bookingsQuery.isLoading && (
           <Animated.View
             entering={FadeInUp.delay(100).duration(400)}
             className="items-center justify-center py-20"
@@ -73,13 +63,21 @@ export default function BookingsScreen() {
               {t("booking.empty")}
             </Text>
             <Text className="text-sm text-gray-300 mt-1 text-center px-8">
-              Your confirmed bookings will appear here
+              Your bookings will appear here after you reserve a court
             </Text>
           </Animated.View>
         )}
 
         {bookings.map((b) => (
-          <View key={b.id} className="mb-3">
+          <Pressable
+            key={b.id}
+            className="mb-3"
+            onPress={() => {
+              if (b.slot.sourceBookingUrl && b.status === "pending") {
+                Linking.openURL(b.slot.sourceBookingUrl);
+              }
+            }}
+          >
             <Card variant="default">
               <View className="flex-row justify-between items-start">
                 <View className="flex-1 mr-3">
@@ -97,6 +95,9 @@ export default function BookingsScreen() {
 
               <View className="flex-row items-center mt-2.5 gap-1.5">
                 <SurfaceBadge surface={b.court.surface as any} />
+                <Badge variant="default">
+                  {PLATFORM_LABELS[b.venue.sourcePlatform] ?? b.venue.sourcePlatform}
+                </Badge>
               </View>
 
               <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-gray-50">
@@ -109,7 +110,7 @@ export default function BookingsScreen() {
                 </Text>
               </View>
             </Card>
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
     </SafeAreaView>

@@ -56,7 +56,7 @@ export default function RootLayout() {
             name="booking/[slotId]"
             options={{
               headerShown: true,
-              headerTitle: "Confirm Booking",
+              headerTitle: "Book Court",
               animation: "slide_from_bottom",
               presentation: "modal",
             }}
