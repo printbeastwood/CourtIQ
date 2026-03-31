@@ -65,6 +65,29 @@
     "verify": "Verify",
     "resend": "Resend Code"
   },
+  "feedback": {
+    "title": "How Was Your Session?",
+    "how_was_session": "How was your session?",
+    "tap_to_rate": "One tap — that's all we need",
+    "what_made_great": "What made it great?",
+    "what_went_wrong": "What went wrong?",
+    "anything_to_share": "Anything you'd like to share?",
+    "optional_detail": "This helps us improve your experience",
+    "select_issues": "Select all that apply",
+    "great_placeholder": "e.g. Great opponents, perfect court condition, loved the morning slot...",
+    "poor_placeholder": "Tell us more about what happened...",
+    "okay_placeholder": "Any thoughts on how we could improve?",
+    "opponent_level": "How was the opponent level?",
+    "opponent_level_desc": "This helps us match you better next time",
+    "submit": "Submit Feedback",
+    "skip": "Skip",
+    "thanks": "Thanks for your feedback!",
+    "thanks_desc": "Your input helps us create better padel experiences for everyone",
+    "done": "Done",
+    "already_submitted_title": "Already Submitted",
+    "already_submitted": "You've already submitted feedback for this session",
+    "give_feedback": "Rate Session"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",
@@ -72,6 +95,7 @@
     "cancel": "Cancel",
     "save": "Save",
     "back": "Back",
+    "next": "Next",
     "thb": "THB"
   },
   "tabs": {

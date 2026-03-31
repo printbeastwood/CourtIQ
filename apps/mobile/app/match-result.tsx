@@ -254,6 +254,21 @@ export default function MatchResultScreen() {
             {/* Actions */}
             <View className="mt-6 gap-3">
               <Button
+                onPress={() =>
+                  router.push({
+                    pathname: "/post-match-feedback",
+                    params: {
+                      matchId: resultData.match.id,
+                      opponentId: opponentId.trim(),
+                    },
+                  })
+                }
+                variant="primary"
+                size="lg"
+              >
+                Rate This Session
+              </Button>
+              <Button
                 onPress={() => {
                   setPhase("input");
                   setMyScore("");

@@ -370,3 +370,59 @@ export function submitMatchResult(data: {
 }) {
   return api.post<MatchResultResponse>("/matches/result", data);
 }
+
+// --- Feedback ---
+
+export type Satisfaction = "great" | "okay" | "poor";
+export type IssueCategory = "court_quality" | "opponent_level" | "time" | "location";
+export type OpponentSkillRating = "too_easy" | "about_right" | "too_hard";
+
+export interface FeedbackResponse {
+  feedback: {
+    id: string;
+    matchId: string | null;
+    bookingId: string | null;
+    playerId: string;
+    satisfaction: Satisfaction;
+    freeText: string | null;
+    issueCategories: IssueCategory[];
+    opponentSkillRating: OpponentSkillRating | null;
+    opponentId: string | null;
+    createdAt: string;
+  };
+}
+
+export interface FeedbackStatsResponse {
+  total: number;
+  great: number;
+  okay: number;
+  poor: number;
+  satisfactionRate: number;
+}
+
+export function submitMatchFeedback(
+  matchId: string,
+  data: {
+    satisfaction: Satisfaction;
+    freeText?: string;
+    issueCategories?: IssueCategory[];
+    opponentSkillRating?: OpponentSkillRating;
+    opponentId?: string;
+    bookingId?: string;
+  },
+) {
+  return api.post<FeedbackResponse>(`/matches/${matchId}/feedback`, data);
+}
+
+export function submitSessionFeedback(data: {
+  satisfaction: Satisfaction;
+  freeText?: string;
+  issueCategories?: IssueCategory[];
+  bookingId?: string;
+}) {
+  return api.post<FeedbackResponse>("/feedback", data);
+}
+
+export function getFeedbackStats(playerId: string) {
+  return api.get<FeedbackStatsResponse>(`/players/${playerId}/feedback-stats`);
+}

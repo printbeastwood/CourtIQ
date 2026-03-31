@@ -18,6 +18,7 @@ import { preferenceRoutes } from "./routes/preferences.js";
 import { conciergeRoutes } from "./routes/concierge.js";
 import { bookingRoutes } from "./routes/bookings.js";
 import { ratingRoutes } from "./routes/ratings.js";
+import { feedbackRoutes } from "./routes/feedback.js";
 import { RatingService } from "@courtiq/rating-engine";
 
 const DATABASE_URL = process.env["DATABASE_URL"];
@@ -79,6 +80,7 @@ await app.register(
     await protectedScope.register(healthRoutes(db));
     await protectedScope.register(bookingRoutes(db));
     await protectedScope.register(ratingRoutes(ratingService));
+    await protectedScope.register(feedbackRoutes(db));
 
     if (preferenceStore) {
       await protectedScope.register(preferenceRoutes(preferenceStore));

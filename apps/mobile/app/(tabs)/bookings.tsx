@@ -2,6 +2,7 @@ import { View, Text, ScrollView, RefreshControl, Linking, Pressable } from "reac
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { Card, Badge, SurfaceBadge, CourtIcon } from "@courtiq/ui";
 import { fetchBookings, type BookingListItem } from "../../src/lib/api";
@@ -24,8 +25,13 @@ const PLATFORM_LABELS: Record<string, string> = {
   club_direct: "Venue Website",
 };
 
+function isSlotPast(endsAt: string): boolean {
+  return new Date(endsAt).getTime() < Date.now();
+}
+
 export default function BookingsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const userId = useAuthStore((s) => s.userId);
 
   const bookingsQuery = useQuery({
@@ -109,6 +115,25 @@ export default function BookingsScreen() {
                   {formatPrice(b.slot.priceCents, b.slot.currency)}
                 </Text>
               </View>
+
+              {b.status === "confirmed" && isSlotPast(b.slot.endsAt) && (
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: "/post-match-feedback",
+                      params: {
+                        bookingId: b.id,
+                        venueName: b.venue.name,
+                      },
+                    })
+                  }
+                  className="mt-3 py-2.5 rounded-xl bg-brand-50 items-center border border-brand-100"
+                >
+                  <Text className="text-sm font-semibold text-brand-600">
+                    {t("feedback.give_feedback")}
+                  </Text>
+                </Pressable>
+              )}
             </Card>
           </Pressable>
         ))}

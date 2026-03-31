@@ -76,6 +76,14 @@ export default function RootLayout() {
               animation: "slide_from_right",
             }}
           />
+          <Stack.Screen
+            name="post-match-feedback"
+            options={{
+              headerShown: false,
+              animation: "slide_from_bottom",
+              presentation: "modal",
+            }}
+          />
         </Stack>
       </QueryClientProvider>
     </GestureHandlerRootView>
