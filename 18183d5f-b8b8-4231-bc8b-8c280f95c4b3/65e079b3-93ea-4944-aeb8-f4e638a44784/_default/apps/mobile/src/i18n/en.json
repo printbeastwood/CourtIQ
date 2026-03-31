@@ -1,0 +1,84 @@
+{
+  "app_name": "CourtIQ",
+  "home": {
+    "title": "Find Your Court",
+    "nearby": "Nearby Courts",
+    "suggested": "Suggested for You",
+    "view_all": "View All"
+  },
+  "search": {
+    "title": "Search Courts",
+    "placeholder": "Search venues...",
+    "filters": "Filters",
+    "surface": "Surface",
+    "indoor": "Indoor",
+    "outdoor": "Outdoor",
+    "price_range": "Price Range",
+    "no_results": "No courts found"
+  },
+  "venue": {
+    "amenities": "Amenities",
+    "courts": "Courts",
+    "available_slots": "Available Slots",
+    "book": "Book Now",
+    "per_hour": "/hr"
+  },
+  "concierge": {
+    "title": "AI Concierge",
+    "placeholder": "Ask me about padel courts...",
+    "thinking": "Finding the best options..."
+  },
+  "booking": {
+    "title": "Booking",
+    "confirm": "Confirm Booking",
+    "history": "Booking History",
+    "status_pending": "Pending",
+    "status_confirmed": "Confirmed",
+    "status_cancelled": "Cancelled",
+    "empty": "No bookings yet"
+  },
+  "profile": {
+    "title": "Profile",
+    "preferences": "My Preferences",
+    "edit_preferences": "Edit Preferences",
+    "language": "Language",
+    "logout": "Log Out",
+    "share": "Share CourtIQ"
+  },
+  "onboarding": {
+    "welcome": "Welcome to CourtIQ",
+    "subtitle": "Your personal padel concierge",
+    "play_style": "What's your play style?",
+    "skill_level": "What's your skill level?",
+    "preferences": "Tell us your preferences",
+    "location": "Where do you play?",
+    "next": "Next",
+    "skip": "Skip",
+    "done": "Get Started"
+  },
+  "auth": {
+    "phone_title": "Enter your phone number",
+    "phone_placeholder": "+66...",
+    "send_otp": "Send Code",
+    "otp_title": "Enter verification code",
+    "otp_placeholder": "123456",
+    "verify": "Verify",
+    "resend": "Resend Code"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "back": "Back",
+    "thb": "THB"
+  },
+  "tabs": {
+    "home": "Home",
+    "search": "Search",
+    "concierge": "Concierge",
+    "bookings": "Bookings",
+    "profile": "Profile"
+  }
+}

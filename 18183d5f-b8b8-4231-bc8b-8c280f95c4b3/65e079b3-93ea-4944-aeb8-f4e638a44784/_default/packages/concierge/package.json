@@ -1,0 +1,22 @@
+{
+  "name": "@courtiq/concierge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@courtiq/shared": "*",
+    "@courtiq/db": "*",
+    "@courtiq/preference-store": "*",
+    "@anthropic-ai/sdk": "^0.39.0",
+    "drizzle-orm": "^0.39.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  }
+}

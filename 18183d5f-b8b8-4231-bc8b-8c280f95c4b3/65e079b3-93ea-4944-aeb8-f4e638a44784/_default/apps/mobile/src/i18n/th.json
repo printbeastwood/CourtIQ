@@ -1,0 +1,84 @@
+{
+  "app_name": "CourtIQ",
+  "home": {
+    "title": "ค้นหาสนาม",
+    "nearby": "สนามใกล้เคียง",
+    "suggested": "แนะนำสำหรับคุณ",
+    "view_all": "ดูทั้งหมด"
+  },
+  "search": {
+    "title": "ค้นหาสนาม",
+    "placeholder": "ค้นหาสถานที่...",
+    "filters": "ตัวกรอง",
+    "surface": "พื้นผิว",
+    "indoor": "ในร่ม",
+    "outdoor": "กลางแจ้ง",
+    "price_range": "ช่วงราคา",
+    "no_results": "ไม่พบสนาม"
+  },
+  "venue": {
+    "amenities": "สิ่งอำนวยความสะดวก",
+    "courts": "สนาม",
+    "available_slots": "ช่วงเวลาว่าง",
+    "book": "จองเลย",
+    "per_hour": "/ชม."
+  },
+  "concierge": {
+    "title": "AI คอนเซียร์จ",
+    "placeholder": "ถามเกี่ยวกับสนามปาเดล...",
+    "thinking": "กำลังหาตัวเลือกที่ดีที่สุด..."
+  },
+  "booking": {
+    "title": "การจอง",
+    "confirm": "ยืนยันการจอง",
+    "history": "ประวัติการจอง",
+    "status_pending": "รอดำเนินการ",
+    "status_confirmed": "ยืนยันแล้ว",
+    "status_cancelled": "ยกเลิกแล้ว",
+    "empty": "ยังไม่มีการจอง"
+  },
+  "profile": {
+    "title": "โปรไฟล์",
+    "preferences": "ความชอบของฉัน",
+    "edit_preferences": "แก้ไขความชอบ",
+    "language": "ภาษา",
+    "logout": "ออกจากระบบ",
+    "share": "แชร์ CourtIQ"
+  },
+  "onboarding": {
+    "welcome": "ยินดีต้อนรับสู่ CourtIQ",
+    "subtitle": "ผู้ช่วยปาเดลส่วนตัวของคุณ",
+    "play_style": "สไตล์การเล่นของคุณ?",
+    "skill_level": "ระดับทักษะของคุณ?",
+    "preferences": "บอกเราเกี่ยวกับความชอบของคุณ",
+    "location": "คุณเล่นที่ไหน?",
+    "next": "ถัดไป",
+    "skip": "ข้าม",
+    "done": "เริ่มเลย"
+  },
+  "auth": {
+    "phone_title": "กรอกหมายเลขโทรศัพท์",
+    "phone_placeholder": "+66...",
+    "send_otp": "ส่งรหัส",
+    "otp_title": "กรอกรหัสยืนยัน",
+    "otp_placeholder": "123456",
+    "verify": "ยืนยัน",
+    "resend": "ส่งรหัสอีกครั้ง"
+  },
+  "common": {
+    "loading": "กำลังโหลด...",
+    "error": "มีข้อผิดพลาด",
+    "retry": "ลองอีกครั้ง",
+    "cancel": "ยกเลิก",
+    "save": "บันทึก",
+    "back": "กลับ",
+    "thb": "บาท"
+  },
+  "tabs": {
+    "home": "หน้าแรก",
+    "search": "ค้นหา",
+    "concierge": "คอนเซียร์จ",
+    "bookings": "การจอง",
+    "profile": "โปรไฟล์"
+  }
+}
