@@ -123,3 +123,70 @@ export interface PreferenceContext {
   preferences: PreferenceMatch[];
   structured: Partial<Record<PreferenceCategory, string[]>>;
 }
+
+// Rating System types
+
+export type MatchFormat = "singles" | "doubles";
+
+export interface Match {
+  id?: string;
+  courtId?: string;
+  format: MatchFormat;
+  player1Id: string;
+  player2Id: string;
+  player1Score?: number;
+  player2Score?: number;
+  winnerId?: string;
+  playedAt: Date;
+  reportedById: string;
+  confirmed: boolean;
+  createdAt?: Date;
+}
+
+export interface PlayerRating {
+  id?: string;
+  playerId: string;
+  format: MatchFormat;
+  rating: number;
+  rd: number;
+  volatility: number;
+  gamesPlayed: number;
+  lastMatchAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface RatingHistoryEntry {
+  id?: string;
+  playerId: string;
+  matchId: string;
+  format: MatchFormat;
+  ratingBefore: number;
+  ratingAfter: number;
+  rdBefore: number;
+  rdAfter: number;
+  opponentId: string;
+  opponentRating: number;
+  result: number;
+  createdAt?: Date;
+}
+
+export interface PlayerRatingResponse {
+  rating: PlayerRating;
+  confidence: number; // 0-1 based on RD
+}
+
+export interface MatchResultInput {
+  opponentId: string;
+  format: MatchFormat;
+  player1Score: number;
+  player2Score: number;
+  playedAt: string;
+  courtId?: string;
+}
+
+export interface MatchWithPlayers {
+  match: Match;
+  player1: { id: string; displayName?: string };
+  player2: { id: string; displayName?: string };
+  ratingChange?: number;
+}

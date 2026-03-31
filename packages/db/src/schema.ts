@@ -136,6 +136,84 @@ export const bookings = pgTable("bookings", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const matches = pgTable(
+  "matches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    courtId: uuid("court_id").references(() => courts.id),
+    format: text("format").notNull(), // singles, doubles
+    player1Id: uuid("player1_id")
+      .references(() => users.id)
+      .notNull(),
+    player2Id: uuid("player2_id")
+      .references(() => users.id)
+      .notNull(),
+    player1Score: integer("player1_score"),
+    player2Score: integer("player2_score"),
+    winnerId: uuid("winner_id").references(() => users.id),
+    playedAt: timestamp("played_at", { withTimezone: true }).notNull(),
+    reportedById: uuid("reported_by_id")
+      .references(() => users.id)
+      .notNull(),
+    confirmed: boolean("confirmed").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_match_player1").on(t.player1Id),
+    index("idx_match_player2").on(t.player2Id),
+    index("idx_match_played_at").on(t.playedAt),
+  ]
+);
+
+export const playerRatings = pgTable(
+  "player_ratings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    playerId: uuid("player_id")
+      .references(() => users.id)
+      .notNull(),
+    format: text("format").notNull(), // singles, doubles
+    rating: real("rating").default(1500).notNull(),
+    rd: real("rd").default(350).notNull(), // rating deviation
+    volatility: real("volatility").default(0.06).notNull(),
+    gamesPlayed: integer("games_played").default(0).notNull(),
+    lastMatchAt: timestamp("last_match_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    unique("uq_player_format_rating").on(t.playerId, t.format),
+    index("idx_rating_player").on(t.playerId),
+  ]
+);
+
+export const ratingHistory = pgTable(
+  "rating_history",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    playerId: uuid("player_id")
+      .references(() => users.id)
+      .notNull(),
+    matchId: uuid("match_id")
+      .references(() => matches.id)
+      .notNull(),
+    format: text("format").notNull(),
+    ratingBefore: real("rating_before").notNull(),
+    ratingAfter: real("rating_after").notNull(),
+    rdBefore: real("rd_before").notNull(),
+    rdAfter: real("rd_after").notNull(),
+    opponentId: uuid("opponent_id")
+      .references(() => users.id)
+      .notNull(),
+    opponentRating: real("opponent_rating").notNull(),
+    result: real("result").notNull(), // 1 = win, 0.5 = draw, 0 = loss
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_rating_history_player").on(t.playerId),
+    index("idx_rating_history_match").on(t.matchId),
+  ]
+);
+
 export const adapterHealthLog = pgTable("adapter_health_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   platform: text("platform").notNull(),

@@ -16,6 +16,7 @@
     "@courtiq/adapters": "*",
     "@courtiq/concierge": "*",
     "@courtiq/db": "*",
+    "@courtiq/rating-engine": "*",
     "@courtiq/preference-store": "*",
     "@courtiq/shared": "*",
     "@fastify/cors": "^11.0.0",

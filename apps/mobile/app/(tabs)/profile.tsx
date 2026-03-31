@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import * as Linking from "expo-linking";
 import { Avatar, Card, Badge } from "@courtiq/ui";
 import { useAuthStore } from "../../src/stores/auth";
-import { getUserPreferences } from "../../src/lib/api";
+import { getUserPreferences, getPlayerRating } from "../../src/lib/api";
 import Svg, { Path, Circle, Rect } from "react-native-svg";
 
 function ChevronRight({ color = "#CBD5E1" }: { color?: string }) {
@@ -42,6 +42,12 @@ export default function ProfileScreen() {
   const prefsQuery = useQuery({
     queryKey: ["preferences", userId],
     queryFn: () => getUserPreferences(userId!),
+    enabled: !!userId,
+  });
+
+  const ratingQuery = useQuery({
+    queryKey: ["rating", userId, "doubles"],
+    queryFn: () => getPlayerRating(userId!, "doubles"),
     enabled: !!userId,
   });
 
@@ -101,8 +107,44 @@ export default function ProfileScreen() {
               </Text>
               <Text className="text-sm text-gray-400 mt-0.5">{phone}</Text>
             </View>
+            {/* Rating badge */}
+            {ratingQuery.data && (
+              <Pressable
+                onPress={() => router.push("/match-history")}
+                className="items-center bg-brand-50 px-4 py-2 rounded-xl border border-brand-100"
+              >
+                <Text className="text-2xl font-bold text-brand-600">
+                  {Math.round(ratingQuery.data.rating)}
+                </Text>
+                <Text className="text-xs text-gray-500 mt-0.5">
+                  {ratingQuery.data.gamesPlayed > 0
+                    ? `${Math.round(ratingQuery.data.confidence * 100)}% conf`
+                    : "Unrated"}
+                </Text>
+              </Pressable>
+            )}
           </View>
         </Card>
+
+        {/* Match actions */}
+        <View className="mt-4 flex-row gap-3">
+          <Pressable
+            onPress={() => router.push("/match-result")}
+            className="flex-1 bg-brand-600 py-3.5 rounded-xl items-center"
+          >
+            <Text className="text-base font-semibold text-white">
+              Log Match
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.push("/match-history")}
+            className="flex-1 bg-white py-3.5 rounded-xl items-center border border-gray-200"
+          >
+            <Text className="text-base font-semibold text-gray-700">
+              Match History
+            </Text>
+          </Pressable>
+        </View>
 
         {/* Preferences */}
         <View className="mt-4">

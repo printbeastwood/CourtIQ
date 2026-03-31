@@ -17,6 +17,8 @@ import { healthRoutes } from "./routes/health.js";
 import { preferenceRoutes } from "./routes/preferences.js";
 import { conciergeRoutes } from "./routes/concierge.js";
 import { bookingRoutes } from "./routes/bookings.js";
+import { ratingRoutes } from "./routes/ratings.js";
+import { RatingService } from "@courtiq/rating-engine";
 
 const DATABASE_URL = process.env["DATABASE_URL"];
 if (!DATABASE_URL) {
@@ -54,6 +56,8 @@ if (ANTHROPIC_API_KEY && preferenceStore) {
   });
 }
 
+const ratingService = new RatingService(db);
+
 const app = Fastify({ logger: true });
 
 await app.register(cors, { origin: true });
@@ -74,6 +78,7 @@ await app.register(
     await protectedScope.register(slotRoutes(db));
     await protectedScope.register(healthRoutes(db));
     await protectedScope.register(bookingRoutes(db));
+    await protectedScope.register(ratingRoutes(ratingService));
 
     if (preferenceStore) {
       await protectedScope.register(preferenceRoutes(preferenceStore));

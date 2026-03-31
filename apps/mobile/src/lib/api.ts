@@ -291,3 +291,82 @@ export function listConversations(userId: string) {
     }>;
   }>(`/users/${userId}/concierge/conversations`);
 }
+
+// --- Ratings ---
+
+export interface PlayerRatingResponse {
+  playerId: string;
+  format: string;
+  rating: number;
+  rd: number;
+  gamesPlayed: number;
+  confidence: number;
+  lastMatchAt: string | null;
+}
+
+export interface RatingHistoryItem {
+  id: string;
+  playerId: string;
+  matchId: string;
+  format: string;
+  ratingBefore: number;
+  ratingAfter: number;
+  rdBefore: number;
+  rdAfter: number;
+  opponentId: string;
+  opponentRating: number;
+  result: number;
+  createdAt: string;
+}
+
+export interface MatchItem {
+  match: {
+    id: string;
+    format: string;
+    player1Id: string;
+    player2Id: string;
+    player1Score: number;
+    player2Score: number;
+    winnerId: string | null;
+    playedAt: string;
+    confirmed: boolean;
+  };
+  player1: { id: string; displayName: string | null };
+  player2: { id: string; displayName: string | null };
+  ratingChange?: number;
+}
+
+export interface MatchResultResponse {
+  match: MatchItem["match"];
+  ratingChanges: {
+    you: { before: { rating: number; rd: number }; after: { rating: number; rd: number }; change: number };
+    opponent: { before: { rating: number; rd: number }; after: { rating: number; rd: number }; change: number };
+  };
+}
+
+export function getPlayerRating(playerId: string, format = "doubles") {
+  return api.get<PlayerRatingResponse>(`/players/${playerId}/rating?format=${format}`);
+}
+
+export function getRatingHistory(playerId: string, format = "doubles", limit = 50) {
+  return api.get<{ playerId: string; format: string; history: RatingHistoryItem[] }>(
+    `/players/${playerId}/rating-history?format=${format}&limit=${limit}`,
+  );
+}
+
+export function getMatchHistory(playerId: string, limit = 20) {
+  return api.get<{ playerId: string; matches: MatchItem[] }>(
+    `/players/${playerId}/matches?limit=${limit}`,
+  );
+}
+
+export function submitMatchResult(data: {
+  opponentId: string;
+  format: "singles" | "doubles";
+  player1Score: number;
+  player2Score: number;
+  playedAt: string;
+  courtId?: string;
+}) {
+  return api.post<MatchResultResponse>("/matches/result", data);
+}

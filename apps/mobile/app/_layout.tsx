@@ -61,6 +61,21 @@ export default function RootLayout() {
               presentation: "modal",
             }}
           />
+          <Stack.Screen
+            name="match-result"
+            options={{
+              headerShown: false,
+              animation: "slide_from_bottom",
+              presentation: "modal",
+            }}
+          />
+          <Stack.Screen
+            name="match-history"
+            options={{
+              headerShown: false,
+              animation: "slide_from_right",
+            }}
+          />
         </Stack>
       </QueryClientProvider>
     </GestureHandlerRootView>
