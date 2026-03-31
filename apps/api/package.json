@@ -8,20 +8,24 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
-    "@courtiq/shared": "*",
-    "@courtiq/db": "*",
     "@courtiq/adapters": "*",
-    "@courtiq/preference-store": "*",
     "@courtiq/concierge": "*",
-    "fastify": "^5.2.0",
+    "@courtiq/db": "*",
+    "@courtiq/preference-store": "*",
+    "@courtiq/shared": "*",
     "@fastify/cors": "^11.0.0",
-    "@fastify/websocket": "^11.0.0"
+    "@fastify/websocket": "^11.0.0",
+    "fastify": "^5.2.0",
+    "firebase-admin": "^13.7.0"
   },
   "devDependencies": {
     "tsx": "^4.19.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.2"
   }
 }

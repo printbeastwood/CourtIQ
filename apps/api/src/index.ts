@@ -8,6 +8,9 @@ import {
   createVoyageQueryProvider,
 } from "@courtiq/preference-store";
 import { Concierge } from "@courtiq/concierge";
+import { initFirebase } from "./firebase.js";
+import { createAuthMiddleware } from "./middleware/auth.js";
+import { authRoutes } from "./routes/auth.js";
 import { venueRoutes } from "./routes/venues.js";
 import { slotRoutes } from "./routes/slots.js";
 import { healthRoutes } from "./routes/health.js";
@@ -21,6 +24,10 @@ if (!DATABASE_URL) {
 }
 
 const db = createDb(DATABASE_URL);
+
+// Initialize Firebase Auth
+const firebaseAuth = initFirebase();
+const authenticate = createAuthMiddleware(firebaseAuth, db);
 
 // Initialize preference store (optional — gracefully skips if keys missing)
 let preferenceStore: PreferenceStore | null = null;
@@ -51,24 +58,36 @@ const app = Fastify({ logger: true });
 await app.register(cors, { origin: true });
 await app.register(websocket);
 
-// Register routes
-await app.register(venueRoutes(db), { prefix: "/api/v1" });
-await app.register(slotRoutes(db), { prefix: "/api/v1" });
-await app.register(healthRoutes(db), { prefix: "/api/v1" });
-
-if (preferenceStore) {
-  await app.register(preferenceRoutes(preferenceStore), { prefix: "/api/v1" });
-}
-
-if (concierge) {
-  await app.register(conciergeRoutes(concierge), { prefix: "/api/v1" });
-  console.log("AI Concierge enabled");
-} else {
-  console.log("AI Concierge disabled (ANTHROPIC_API_KEY and VOYAGE_API_KEY required)");
-}
+// === Public routes (no auth required) ===
+await app.register(authRoutes(firebaseAuth, db), { prefix: "/api/v1" });
 
 // Root health check
 app.get("/health", async () => ({ status: "ok", service: "courtiq-api" }));
+
+// === Protected routes (auth required) ===
+await app.register(
+  async (protectedScope) => {
+    protectedScope.addHook("onRequest", authenticate);
+
+    await protectedScope.register(venueRoutes(db));
+    await protectedScope.register(slotRoutes(db));
+    await protectedScope.register(healthRoutes(db));
+
+    if (preferenceStore) {
+      await protectedScope.register(preferenceRoutes(preferenceStore));
+    }
+
+    if (concierge) {
+      await protectedScope.register(conciergeRoutes(concierge));
+      console.log("AI Concierge enabled");
+    } else {
+      console.log(
+        "AI Concierge disabled (ANTHROPIC_API_KEY and VOYAGE_API_KEY required)"
+      );
+    }
+  },
+  { prefix: "/api/v1" }
+);
 
 const port = parseInt(process.env["PORT"] || "3000", 10);
 const host = process.env["HOST"] || "0.0.0.0";
