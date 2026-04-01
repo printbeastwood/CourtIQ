@@ -32,6 +32,7 @@ import { notificationRoutes } from "./routes/notifications.js";
 import { matchRoutes } from "./routes/matches.js";
 import { importRoutes } from "./routes/import.js";
 import { reflinkRoutes } from "./routes/reflink.js";
+import { referralRoutes } from "./routes/referrals.js";
 import { RatingService } from "@courtiq/rating-engine";
 import { NotificationService } from "./services/notifications.js";
 import { MigrationService } from "./services/migration.js";
@@ -134,6 +135,7 @@ await app.register(
     await protectedScope.register(feedbackRoutes(db));
     await protectedScope.register(playerRoutes(db));
     await protectedScope.register(matchRoutes(db, notificationService));
+    await protectedScope.register(referralRoutes(db));
 
     if (notificationService) {
       await protectedScope.register(notificationRoutes(db, notificationService));

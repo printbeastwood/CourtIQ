@@ -10,7 +10,8 @@ import Animated, {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, RacketIcon } from "@courtiq/ui";
 import { useAuthStore } from "../src/stores/auth";
-import { storePreferences } from "../src/lib/api";
+import { useReferralStore } from "../src/stores/referral";
+import { storePreferences, claimReferralCode } from "../src/lib/api";
 
 const SKILL_LEVELS = [
   { label: "Beginner", desc: "Just starting out" },
@@ -49,6 +50,8 @@ export default function OnboardingScreen() {
   const userId = useAuthStore((s) => s.userId);
   const displayName = useAuthStore((s) => s.displayName);
   const setOnboarded = useAuthStore((s) => s.setOnboarded);
+  const pendingCode = useReferralStore((s) => s.pendingCode);
+  const clearPendingCode = useReferralStore((s) => s.clearPendingCode);
   const [stepIndex, setStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string[]>>({
     skill: [],
@@ -108,6 +111,17 @@ export default function OnboardingScreen() {
         }
         if (prefs.length > 0) {
           await storePreferences(userId, prefs);
+        }
+
+        // Auto-claim pending referral code (best-effort, don't block onboarding)
+        if (pendingCode) {
+          try {
+            await claimReferralCode(pendingCode);
+          } catch {
+            // Claim failed (already claimed, invalid code, self-referral) — ignore
+          } finally {
+            await clearPendingCode();
+          }
         }
       }
       await setOnboarded(true);

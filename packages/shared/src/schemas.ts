@@ -107,3 +107,20 @@ export const playerDiscoverySchema = z.object({
 });
 
 export type PlayerDiscoveryQuery = z.infer<typeof playerDiscoverySchema>;
+
+// Referral schemas
+
+export const referralOwnerTypeSchema = z.enum(["player", "venue", "influencer"]);
+
+export const generateReferralCodeSchema = z.object({
+  ownerType: referralOwnerTypeSchema.optional().default("player"),
+});
+
+export const claimReferralSchema = z.object({
+  code: z.string().min(1).max(20),
+});
+
+export const referralListSchema = z.object({
+  page: z.coerce.number().int().positive().optional().default(1),
+  limit: z.coerce.number().int().positive().max(50).optional().default(20),
+});

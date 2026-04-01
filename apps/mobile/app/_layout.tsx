@@ -3,8 +3,10 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import * as Linking from "expo-linking";
 import { useAuthStore, subscribeToAuthState } from "../src/stores/auth";
 import { useLocationStore } from "../src/stores/location";
+import { useReferralStore } from "../src/stores/referral";
 import { useNotificationListeners } from "../src/lib/notifications";
 import "../src/i18n";
 import "../global.css";
@@ -22,16 +24,39 @@ const queryClient = new QueryClient({
 export default function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
   const requestLocation = useLocationStore((s) => s.requestLocation);
+  const hydrateReferral = useReferralStore((s) => s.hydrate);
+  const setPendingCode = useReferralStore((s) => s.setPendingCode);
 
   // Register push notification listeners and handle navigation on tap
   useNotificationListeners();
 
   useEffect(() => {
     hydrate();
+    hydrateReferral();
     requestLocation();
     const unsubscribe = subscribeToAuthState();
-    return () => { unsubscribe(); };
-  }, [hydrate, requestLocation]);
+
+    // Handle deep links for referral codes (courtiq:///r/CODE or https://courtiq.app/r/CODE)
+    const handleDeepLink = ({ url }: { url: string }) => {
+      const refMatch = url.match(/\/r\/([A-Za-z0-9]+)/);
+      if (refMatch?.[1]) {
+        setPendingCode(refMatch[1].toUpperCase());
+      }
+    };
+
+    // Check initial URL (cold start)
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url });
+    });
+
+    // Listen for incoming links (warm start)
+    const linkSub = Linking.addEventListener("url", handleDeepLink);
+
+    return () => {
+      unsubscribe();
+      linkSub.remove();
+    };
+  }, [hydrate, hydrateReferral, requestLocation, setPendingCode]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -108,6 +133,13 @@ export default function RootLayout() {
               headerShown: false,
               animation: "slide_from_bottom",
               presentation: "modal",
+            }}
+          />
+          <Stack.Screen
+            name="referrals"
+            options={{
+              headerShown: false,
+              animation: "slide_from_right",
             }}
           />
         </Stack>

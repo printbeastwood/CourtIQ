@@ -350,6 +350,52 @@ export const notifications = pgTable(
   ]
 );
 
+export const referralCodes = pgTable(
+  "referral_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .references(() => users.id)
+      .notNull(),
+    code: text("code").unique().notNull(),
+    ownerType: text("owner_type").default("player").notNull(), // player, venue, influencer
+    clickCount: integer("click_count").default(0).notNull(),
+    claimCount: integer("claim_count").default(0).notNull(),
+    active: boolean("active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_referral_code_owner").on(t.ownerId),
+    index("idx_referral_code_active").on(t.active),
+  ]
+);
+
+export const referralClaims = pgTable(
+  "referral_claims",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    codeId: uuid("code_id")
+      .references(() => referralCodes.id)
+      .notNull(),
+    referrerId: uuid("referrer_id")
+      .references(() => users.id)
+      .notNull(),
+    refereeId: uuid("referee_id")
+      .references(() => users.id)
+      .notNull(),
+    status: text("status").default("pending").notNull(), // pending, confirmed, rewarded
+    clickedAt: timestamp("clicked_at", { withTimezone: true }),
+    claimedAt: timestamp("claimed_at", { withTimezone: true }).defaultNow().notNull(),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+  },
+  (t) => [
+    unique("uq_referral_claim_referee").on(t.refereeId),
+    index("idx_referral_claim_referrer").on(t.referrerId),
+    index("idx_referral_claim_code").on(t.codeId),
+    index("idx_referral_claim_status").on(t.status),
+  ]
+);
+
 export const adapterHealthLog = pgTable("adapter_health_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   platform: text("platform").notNull(),

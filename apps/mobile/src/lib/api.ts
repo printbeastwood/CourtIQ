@@ -661,3 +661,63 @@ export function getNotifications(limit = 20) {
 export function cancelNotification(notificationId: string) {
   return api.delete<{ success: boolean }>(`/notifications/${notificationId}`);
 }
+
+// --- Referrals ---
+
+export interface ReferralCodeResponse {
+  referral: {
+    id: string;
+    code: string;
+    ownerType: "player" | "venue" | "influencer";
+    shareUrl: string;
+    clickCount: number;
+    claimCount: number;
+    createdAt: string;
+  };
+}
+
+export interface ReferralClaimItem {
+  id: string;
+  refereeDisplayName: string | null;
+  status: "pending" | "confirmed" | "rewarded";
+  claimedAt: string | null;
+  confirmedAt: string | null;
+}
+
+export interface ReferralMineResponse {
+  referral: ReferralCodeResponse["referral"] | null;
+  claims: ReferralClaimItem[];
+  stats: {
+    totalClicks: number;
+    totalClaims: number;
+    pendingClaims: number;
+    confirmedClaims: number;
+  };
+}
+
+export interface ReferralResolveResponse {
+  referral: {
+    code: string;
+    ownerType: string;
+    referrerName: string | null;
+  };
+}
+
+export function generateReferralCode(ownerType: "player" | "venue" | "influencer" = "player") {
+  return api.post<ReferralCodeResponse>("/referrals/generate", { ownerType });
+}
+
+export function getMyReferrals(page = 1, limit = 20) {
+  return api.get<ReferralMineResponse>(`/referrals/mine?page=${page}&limit=${limit}`);
+}
+
+export function claimReferralCode(code: string) {
+  return api.post<{ claim: { id: string; referrerId: string; status: string; claimedAt: string | null } }>(
+    "/referrals/claim",
+    { code },
+  );
+}
+
+export function resolveReferralCode(code: string) {
+  return api.get<ReferralResolveResponse>(`/referrals/resolve/${code}`);
+}

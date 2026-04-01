@@ -365,6 +365,50 @@ export interface Notification {
   createdAt?: Date;
 }
 
+// Referral types
+
+export type ReferralOwnerType = "player" | "venue" | "influencer";
+export type ReferralClaimStatus = "pending" | "confirmed" | "rewarded";
+
+export interface ReferralCode {
+  id?: string;
+  ownerId: string;
+  code: string;
+  ownerType: ReferralOwnerType;
+  clickCount: number;
+  claimCount: number;
+  active: boolean;
+  createdAt?: Date;
+}
+
+export interface ReferralClaim {
+  id?: string;
+  codeId: string;
+  referrerId: string;
+  refereeId: string;
+  status: ReferralClaimStatus;
+  clickedAt?: Date;
+  claimedAt?: Date;
+  confirmedAt?: Date;
+}
+
+export interface ReferralStats {
+  code: string;
+  ownerType: ReferralOwnerType;
+  totalClicks: number;
+  totalClaims: number;
+  pendingClaims: number;
+  confirmedClaims: number;
+}
+
+export interface ReferralClaimDetail {
+  id: string;
+  refereeDisplayName: string | null;
+  status: ReferralClaimStatus;
+  claimedAt: string;
+  confirmedAt: string | null;
+}
+
 export interface ScheduleNotificationInput {
   userId: string;
   type: NotificationType;

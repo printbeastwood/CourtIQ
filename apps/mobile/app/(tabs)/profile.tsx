@@ -1,12 +1,11 @@
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
+import { View, Text, ScrollView, Pressable, Alert, Share } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import * as Linking from "expo-linking";
 import { Avatar, Card, Badge } from "@courtiq/ui";
 import { useAuthStore } from "../../src/stores/auth";
-import { getUserPreferences, getPlayerRating } from "../../src/lib/api";
+import { getUserPreferences, getPlayerRating, getMyReferrals } from "../../src/lib/api";
 import Svg, { Path, Circle, Rect } from "react-native-svg";
 
 function ChevronRight({ color = "#CBD5E1" }: { color?: string }) {
@@ -66,11 +65,25 @@ export default function ProfileScreen() {
     i18n.changeLanguage(next);
   };
 
+  const referralsQuery = useQuery({
+    queryKey: ["referrals", "mine"],
+    queryFn: () => getMyReferrals(),
+    enabled: !!userId,
+  });
+
   const handleShare = async () => {
-    const url = Linking.createURL("/", {
-      queryParams: { ref: userId ?? "" },
-    });
-    Alert.alert("Share CourtIQ", `Invite link: ${url}`);
+    const refData = referralsQuery.data?.referral;
+    const shareUrl = refData?.shareUrl ?? "https://courtiq.app";
+    const code = refData?.code;
+    try {
+      await Share.share({
+        message: code
+          ? `Join me on CourtIQ — your AI padel concierge! Use my code ${code} or sign up here: ${shareUrl}`
+          : `Join me on CourtIQ — your AI padel concierge! ${shareUrl}`,
+      });
+    } catch {
+      // User cancelled
+    }
   };
 
   const handleLogout = () => {
@@ -204,6 +217,23 @@ export default function ProfileScreen() {
                 <Text className="text-sm text-gray-400 mr-1.5">
                   {i18n.language === "en" ? "English" : "ไทย"}
                 </Text>
+                <ChevronRight />
+              </View>
+            </Pressable>
+
+            <Pressable
+              className="flex-row justify-between items-center px-5 py-4 border-b border-gray-50"
+              onPress={() => router.push("/referrals")}
+            >
+              <Text className="text-base text-gray-900">Referrals</Text>
+              <View className="flex-row items-center">
+                {referralsQuery.data?.stats?.totalClaims ? (
+                  <View className="bg-brand-50 rounded-full px-2 py-0.5 mr-2">
+                    <Text className="text-xs font-medium text-brand-600">
+                      {referralsQuery.data.stats.totalClaims}
+                    </Text>
+                  </View>
+                ) : null}
                 <ChevronRight />
               </View>
             </Pressable>
