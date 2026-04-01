@@ -4,6 +4,7 @@ import type { Db } from "@courtiq/db";
 import { venues, courts } from "@courtiq/db";
 import { getAdapter, getAdapterPlatforms } from "@courtiq/adapters";
 import type { Region } from "@courtiq/shared";
+import type { StripeService } from "../services/stripe.js";
 
 interface OnboardingBody {
   business: {
@@ -35,7 +36,7 @@ interface OnboardingBody {
   addressConfirmed: boolean;
 }
 
-export function venueOnboardingRoutes(db: Db): FastifyPluginAsync {
+export function venueOnboardingRoutes(db: Db, stripeService?: StripeService | null): FastifyPluginAsync {
   return async (app) => {
     // Submit new venue onboarding
     app.post<{ Body: OnboardingBody }>("/venue-onboarding", async (request, reply) => {
@@ -184,81 +185,72 @@ export function venueOnboardingRoutes(db: Db): FastifyPluginAsync {
     });
 
     // ---- Stripe Connect routes ----
-    // These are MVP stubs. COU-30 will replace with real Stripe API integration.
 
     // Get Stripe account status for a venue
     app.get<{ Params: { id: string } }>("/venues/:id/stripe/status", async (request, reply) => {
       const { id } = request.params;
 
-      const [venue] = await db.select().from(venues).where(eq(venues.id, id)).limit(1);
-      if (!venue) {
-        reply.code(404);
-        return { error: "Venue not found" };
-      }
-
-      const metadata = (venue.metadata ?? {}) as Record<string, unknown>;
-      const stripeAccountId = metadata.stripeAccountId as string | undefined;
-
-      if (!stripeAccountId) {
+      if (!stripeService) {
+        // Fallback to metadata-based status when Stripe is not configured
+        const [venue] = await db.select().from(venues).where(eq(venues.id, id)).limit(1);
+        if (!venue) { reply.code(404); return { error: "Venue not found" }; }
+        const metadata = (venue.metadata ?? {}) as Record<string, unknown>;
         return {
-          connected: false,
-          accountId: null,
+          connected: !!metadata.stripeAccountId,
+          accountId: (metadata.stripeAccountId as string) ?? null,
           chargesEnabled: false,
           payoutsEnabled: false,
           detailsSubmitted: false,
-          dashboardUrl: null,
-          requirements: [],
         };
       }
 
-      // MVP: return stored status from metadata
-      return {
-        connected: true,
-        accountId: stripeAccountId,
-        chargesEnabled: (metadata.stripeChargesEnabled as boolean) ?? false,
-        payoutsEnabled: (metadata.stripePayoutsEnabled as boolean) ?? false,
-        detailsSubmitted: (metadata.stripeDetailsSubmitted as boolean) ?? false,
-        dashboardUrl: `https://dashboard.stripe.com/${stripeAccountId}`,
-        requirements: (metadata.stripeRequirements as string[]) ?? [],
-      };
+      try {
+        return await stripeService.getAccountStatus(id);
+      } catch (err) {
+        request.log.error(err, "Failed to get Stripe account status");
+        reply.code(500);
+        return { error: { code: "STRIPE_ERROR", message: "Failed to get account status" } };
+      }
     });
 
     // Initiate Stripe Connect onboarding — returns a URL to redirect the venue owner
-    app.post<{ Params: { id: string }; Body: { returnUrl?: string } }>(
+    app.post<{ Params: { id: string }; Body: { returnUrl?: string; email?: string } }>(
       "/venues/:id/stripe/onboard",
       async (request, reply) => {
         const { id } = request.params;
-        const { returnUrl } = request.body ?? {};
+        const { returnUrl, email } = request.body ?? {};
 
         const [venue] = await db.select().from(venues).where(eq(venues.id, id)).limit(1);
-        if (!venue) {
-          reply.code(404);
-          return { error: "Venue not found" };
+        if (!venue) { reply.code(404); return { error: "Venue not found" }; }
+
+        if (!stripeService) {
+          reply.code(503);
+          return { error: { code: "STRIPE_NOT_CONFIGURED", message: "Stripe is not configured" } };
         }
 
-        // MVP stub: in production, this creates a Stripe AccountLink via the Stripe API.
-        // For now, simulate by storing a placeholder account ID and redirecting to return URL.
-        const metadata = (venue.metadata ?? {}) as Record<string, unknown>;
-        if (!metadata.stripeAccountId) {
-          const stubAccountId = `acct_stub_${id.slice(0, 8)}`;
-          await db
-            .update(venues)
-            .set({
-              metadata: {
-                ...metadata,
-                stripeAccountId: stubAccountId,
-                stripeChargesEnabled: true,
-                stripePayoutsEnabled: true,
-                stripeDetailsSubmitted: true,
-                stripeRequirements: [],
-                stripeConnectedAt: new Date().toISOString(),
-              },
-            })
-            .where(eq(venues.id, id));
-        }
+        try {
+          const metadata = (venue.metadata ?? {}) as Record<string, unknown>;
+          if (!metadata.stripeAccountId) {
+            const adminEmail = email || (metadata.adminEmail as string) || (metadata.email as string);
+            if (!adminEmail) {
+              reply.code(400);
+              return { error: { code: "EMAIL_REQUIRED", message: "Email is required to create a Stripe account" } };
+            }
+            await stripeService.createConnectAccount(id, adminEmail);
+          }
 
-        const redirect = returnUrl || `${request.protocol}://${request.hostname}/stripe/return`;
-        return { url: redirect };
+          const baseUrl = returnUrl || `${request.protocol}://${request.hostname}`;
+          const url = await stripeService.createAccountLink(
+            id,
+            `${baseUrl}/stripe/return`,
+            `${baseUrl}/stripe/return?refresh=true`,
+          );
+          return { url };
+        } catch (err) {
+          request.log.error(err, "Failed to create Stripe onboarding link");
+          reply.code(500);
+          return { error: { code: "STRIPE_ERROR", message: "Failed to initiate Stripe onboarding" } };
+        }
       },
     );
 
@@ -266,32 +258,25 @@ export function venueOnboardingRoutes(db: Db): FastifyPluginAsync {
     app.post<{ Params: { id: string } }>("/venues/:id/stripe/disconnect", async (request, reply) => {
       const { id } = request.params;
 
-      const [venue] = await db.select().from(venues).where(eq(venues.id, id)).limit(1);
-      if (!venue) {
-        reply.code(404);
-        return { error: "Venue not found" };
+      if (stripeService) {
+        try {
+          await stripeService.disconnectAccount(id);
+          return { success: true };
+        } catch (err) {
+          request.log.error(err, "Failed to disconnect Stripe account");
+          reply.code(500);
+          return { error: { code: "STRIPE_ERROR", message: "Failed to disconnect" } };
+        }
       }
 
+      // Fallback: clear metadata manually
+      const [venue] = await db.select().from(venues).where(eq(venues.id, id)).limit(1);
+      if (!venue) { reply.code(404); return { error: "Venue not found" }; }
       const metadata = (venue.metadata ?? {}) as Record<string, unknown>;
-      const { stripeAccountId, stripeChargesEnabled, stripePayoutsEnabled, stripeDetailsSubmitted, stripeRequirements, stripeConnectedAt, ...rest } = metadata;
-
-      await db
-        .update(venues)
-        .set({ metadata: rest })
-        .where(eq(venues.id, id));
-
+      const { stripeAccountId: _, stripeConnectedAt: __, ...rest } = metadata;
+      await db.update(venues).set({ metadata: rest }).where(eq(venues.id, id));
       return { success: true };
     });
-
-    // Stripe Connect OAuth callback (redirect handler)
-    app.get<{ Querystring: { code?: string; state?: string } }>(
-      "/stripe/connect/callback",
-      async (request, reply) => {
-        // MVP stub: In production, exchange the authorization code for a Stripe account.
-        // For now, redirect to the venue dashboard return page.
-        reply.redirect("/stripe/return");
-      },
-    );
 
     // ---- Platform Migration Routes ----
 

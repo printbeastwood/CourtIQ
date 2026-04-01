@@ -33,10 +33,14 @@ import { matchRoutes } from "./routes/matches.js";
 import { importRoutes } from "./routes/import.js";
 import { reflinkRoutes } from "./routes/reflink.js";
 import { referralRoutes } from "./routes/referrals.js";
+import { venueOnboardingRoutes } from "./routes/venue-onboarding.js";
+import { paymentRoutes } from "./routes/payments.js";
+import { webhookRoutes } from "./routes/webhooks.js";
 import { RatingService } from "@courtiq/rating-engine";
 import { NotificationService } from "./services/notifications.js";
 import { MigrationService } from "./services/migration.js";
 import { ReflinkService } from "./services/reflink.js";
+import { StripeService } from "./services/stripe.js";
 import { Redis } from "ioredis";
 
 const DATABASE_URL = process.env["DATABASE_URL"];
@@ -99,6 +103,18 @@ if (REDIS_URL) {
   console.log("Notification service disabled (REDIS_URL required)");
 }
 
+// Initialize Stripe service (optional — requires STRIPE_SECRET_KEY)
+let stripeService: StripeService | null = null;
+const STRIPE_SECRET_KEY = process.env["STRIPE_SECRET_KEY"];
+const STRIPE_WEBHOOK_SECRET = process.env["STRIPE_WEBHOOK_SECRET"];
+
+if (STRIPE_SECRET_KEY) {
+  stripeService = new StripeService({ stripeSecretKey: STRIPE_SECRET_KEY, db });
+  console.log("Stripe payment service enabled");
+} else {
+  console.log("Stripe disabled (STRIPE_SECRET_KEY required)");
+}
+
 const app = Fastify({ logger: true });
 
 await app.register(cors, { origin: true });
@@ -106,6 +122,13 @@ await app.register(websocket);
 
 // === Public routes (no auth required) ===
 await app.register(authRoutes(firebaseAuth, db), { prefix: "/api/v1" });
+await app.register(venueOnboardingRoutes(db, stripeService), { prefix: "/api/v1" });
+
+// Stripe webhook (public, uses signature verification)
+if (stripeService && STRIPE_WEBHOOK_SECRET) {
+  await app.register(webhookRoutes(stripeService, STRIPE_WEBHOOK_SECRET), { prefix: "/api/v1" });
+  console.log("Stripe webhook route enabled");
+}
 
 // Migration / import routes (always available)
 const migrationService = new MigrationService({
@@ -136,6 +159,11 @@ await app.register(
     await protectedScope.register(playerRoutes(db));
     await protectedScope.register(matchRoutes(db, notificationService));
     await protectedScope.register(referralRoutes(db));
+
+    if (stripeService) {
+      await protectedScope.register(paymentRoutes(stripeService));
+      console.log("Payment routes enabled");
+    }
 
     if (notificationService) {
       await protectedScope.register(notificationRoutes(db, notificationService));

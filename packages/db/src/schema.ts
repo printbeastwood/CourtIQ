@@ -396,6 +396,42 @@ export const referralClaims = pgTable(
   ]
 );
 
+export const payments = pgTable(
+  "payments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    bookingId: uuid("booking_id")
+      .references(() => bookings.id)
+      .notNull(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    venueId: uuid("venue_id")
+      .references(() => venues.id)
+      .notNull(),
+    stripePaymentIntentId: text("stripe_payment_intent_id").unique(),
+    stripeChargeId: text("stripe_charge_id"),
+    amountCents: integer("amount_cents").notNull(),
+    commissionCents: integer("commission_cents").notNull(),
+    venuePayoutCents: integer("venue_payout_cents").notNull(),
+    commissionRate: real("commission_rate").notNull(), // e.g. 0.05 for 5%
+    currency: text("currency").default("THB").notNull(),
+    status: text("status").default("pending").notNull(), // pending, succeeded, failed, refunded, partially_refunded
+    stripeTransferId: text("stripe_transfer_id"),
+    refundedAmountCents: integer("refunded_amount_cents").default(0).notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_payment_booking").on(t.bookingId),
+    index("idx_payment_user").on(t.userId),
+    index("idx_payment_venue").on(t.venueId),
+    index("idx_payment_status").on(t.status),
+    index("idx_payment_stripe_pi").on(t.stripePaymentIntentId),
+  ]
+);
+
 export const adapterHealthLog = pgTable("adapter_health_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   platform: text("platform").notNull(),
