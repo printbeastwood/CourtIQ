@@ -432,6 +432,90 @@ export const payments = pgTable(
   ]
 );
 
+export const coaches = pgTable(
+  "coaches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .unique(),
+    name: text("name").notNull(),
+    slug: text("slug").unique().notNull(),
+    email: text("email"),
+    phone: text("phone"),
+    bio: text("bio"),
+    avatarUrl: text("avatar_url"),
+    certifications: jsonb("certifications").$type<string[]>().default([]),
+    languages: jsonb("languages").$type<string[]>().default([]),
+    specialities: jsonb("specialities").$type<string[]>().default([]),
+    lessonTypes: jsonb("lesson_types")
+      .$type<{ name: string; durationMin: number; priceCents: number; maxStudents: number; description?: string }[]>()
+      .default([]),
+    venueIds: jsonb("venue_ids").$type<string[]>().default([]),
+    sourcePlatform: text("source_platform"), // playtomic, matchi, manual, etc.
+    sourceId: text("source_id"),
+    status: text("status").default("pending").notNull(), // pending, active, inactive
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_coach_status").on(t.status),
+    index("idx_coach_user").on(t.userId),
+  ]
+);
+
+export const coachStudents = pgTable(
+  "coach_students",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    coachId: uuid("coach_id")
+      .references(() => coaches.id)
+      .notNull(),
+    studentId: uuid("student_id")
+      .references(() => users.id)
+      .notNull(),
+    status: text("status").default("active").notNull(), // active, inactive
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    unique("uq_coach_student").on(t.coachId, t.studentId),
+    index("idx_coach_student_coach").on(t.coachId),
+    index("idx_coach_student_student").on(t.studentId),
+  ]
+);
+
+export const coachingSessions = pgTable(
+  "coaching_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    coachId: uuid("coach_id")
+      .references(() => coaches.id)
+      .notNull(),
+    venueId: uuid("venue_id").references(() => venues.id),
+    courtId: uuid("court_id").references(() => courts.id),
+    bookingId: uuid("booking_id").references(() => bookings.id),
+    lessonType: text("lesson_type").notNull(),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+    priceCents: integer("price_cents").notNull(),
+    currency: text("currency").default("THB").notNull(),
+    maxStudents: integer("max_students").default(1).notNull(),
+    status: text("status").default("available").notNull(), // available, booked, completed, cancelled
+    studentIds: jsonb("student_ids").$type<string[]>().default([]),
+    notes: text("notes"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_coaching_session_coach").on(t.coachId),
+    index("idx_coaching_session_starts").on(t.startsAt),
+    index("idx_coaching_session_status").on(t.status),
+    index("idx_coaching_session_venue").on(t.venueId),
+  ]
+);
+
 export const adapterHealthLog = pgTable("adapter_health_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   platform: text("platform").notNull(),

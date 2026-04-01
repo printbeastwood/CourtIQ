@@ -29,6 +29,13 @@
       "when": 1775065135944,
       "tag": "0003_large_penance",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1775065574112,
+      "tag": "0004_plain_vanisher",
+      "breakpoints": true
     }
   ]
 }

@@ -34,6 +34,7 @@ import { importRoutes } from "./routes/import.js";
 import { reflinkRoutes } from "./routes/reflink.js";
 import { referralRoutes } from "./routes/referrals.js";
 import { venueOnboardingRoutes } from "./routes/venue-onboarding.js";
+import { coachRoutes } from "./routes/coaches.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { webhookRoutes } from "./routes/webhooks.js";
 import { RatingService } from "@courtiq/rating-engine";
@@ -159,6 +160,7 @@ await app.register(
     await protectedScope.register(playerRoutes(db));
     await protectedScope.register(matchRoutes(db, notificationService));
     await protectedScope.register(referralRoutes(db));
+    await protectedScope.register(coachRoutes(db));
 
     if (stripeService) {
       await protectedScope.register(paymentRoutes(stripeService));
