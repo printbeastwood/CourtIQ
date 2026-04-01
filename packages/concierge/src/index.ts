@@ -1,11 +1,26 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@courtiq/db";
 import type { PreferenceStore } from "@courtiq/preference-store";
 import { ConversationManager } from "./conversation.js";
 import { toolDefinitions, executeTool, type ToolExecutorDeps } from "./tools.js";
+import {
+  createLLMProvider,
+  createAnthropicProvider,
+  type LLMProvider,
+  type LLMMessage,
+  type LLMToolDefinition,
+  type LLMToolResult,
+  type ProviderConfig,
+} from "./llm-provider.js";
 
 export { ConversationManager } from "./conversation.js";
 export { toolDefinitions } from "./tools.js";
+export {
+  createLLMProvider,
+  createAnthropicProvider,
+  createOpenAICompatibleProvider,
+  type LLMProvider,
+  type ProviderConfig,
+} from "./llm-provider.js";
 
 const MAX_TOOL_ROUNDS = 5;
 
@@ -44,9 +59,12 @@ You help players find and book the perfect padel courts based on their preferenc
 - Never fabricate court availability — only present results from search_courts`;
 
 export interface ConciergeConfig {
-  anthropicApiKey: string;
   db: Db;
   preferenceStore: PreferenceStore;
+  // Option 1: pass a pre-built provider
+  llmProvider?: LLMProvider;
+  // Option 2: pass Anthropic key (backwards compatible)
+  anthropicApiKey?: string;
   model?: string;
 }
 
@@ -64,15 +82,19 @@ export interface StreamCallbacks {
 }
 
 export class Concierge {
-  private client: Anthropic;
-  private model: string;
+  private llm: LLMProvider;
   private db: Db;
   private preferenceStore: PreferenceStore;
   private conversationManager: ConversationManager;
 
   constructor(config: ConciergeConfig) {
-    this.client = new Anthropic({ apiKey: config.anthropicApiKey });
-    this.model = config.model ?? "claude-sonnet-4-20250514";
+    if (config.llmProvider) {
+      this.llm = config.llmProvider;
+    } else if (config.anthropicApiKey) {
+      this.llm = createAnthropicProvider(config.anthropicApiKey, config.model);
+    } else {
+      throw new Error("Either llmProvider or anthropicApiKey must be provided");
+    }
     this.db = config.db;
     this.preferenceStore = config.preferenceStore;
     this.conversationManager = new ConversationManager(config.db);
@@ -84,8 +106,7 @@ export class Concierge {
 
   /**
    * Send a message in a conversation and get a response.
-   * Handles the full tool-use loop: Claude may call tools, we execute them,
-   * and feed results back until Claude produces a final text response.
+   * Handles the full tool-use loop.
    */
   async chat(
     userId: string,
@@ -93,14 +114,10 @@ export class Concierge {
     userMessage: string,
     callbacks?: StreamCallbacks
   ): Promise<ChatResult> {
-    // Save the user message
     await this.conversationManager.saveMessage(conversationId, "user", userMessage);
 
-    // Load conversation history
     const history = await this.conversationManager.loadContextWindow(conversationId);
 
-    // Ensure the new user message is included
-    // (loadContextWindow may not have it yet if DB is slow, but it should since we just inserted)
     const lastMsg = history[history.length - 1];
     if (!lastMsg || lastMsg.role !== "user" || lastMsg.content !== userMessage) {
       history.push({ role: "user", content: userMessage });
@@ -113,31 +130,19 @@ export class Concierge {
     };
 
     const toolsUsed: string[] = [];
-    let currentMessages = [...history];
+    let currentMessages: LLMMessage[] = [...history] as LLMMessage[];
 
-    // Tool-use loop: Claude may call tools multiple times before producing a final answer
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-      const response = await this.client.messages.create({
-        model: this.model,
-        max_tokens: 2048,
+      const response = await this.llm.chat({
         system: SYSTEM_PROMPT,
-        tools: toolDefinitions,
         messages: currentMessages,
+        tools: toolDefinitions as unknown as LLMToolDefinition[],
+        maxTokens: 2048,
       });
 
-      // Check if Claude wants to use tools
-      const toolUseBlocks = response.content.filter(
-        (b): b is Anthropic.ToolUseBlock => b.type === "tool_use"
-      );
+      if (response.toolCalls.length === 0) {
+        const responseText = response.text ?? "";
 
-      if (toolUseBlocks.length === 0) {
-        // No tool use — extract final text response
-        const textBlock = response.content.find(
-          (b): b is Anthropic.TextBlock => b.type === "text"
-        );
-        const responseText = textBlock?.text ?? "";
-
-        // Save assistant response
         await this.conversationManager.saveMessage(
           conversationId,
           "assistant",
@@ -155,53 +160,56 @@ export class Concierge {
         return result;
       }
 
-      // Claude wants to use tools — execute them all
-      // First, add Claude's response to messages
-      currentMessages.push({
-        role: "assistant",
-        content: response.content,
-      });
+      // Build assistant message with tool calls (Anthropic format for storage)
+      const assistantContent: unknown[] = [];
+      if (response.text) {
+        assistantContent.push({ type: "text", text: response.text });
+      }
+      for (const tc of response.toolCalls) {
+        assistantContent.push({
+          type: "tool_use",
+          id: tc.id,
+          name: tc.name,
+          input: tc.input,
+        });
+      }
+      currentMessages.push({ role: "assistant", content: assistantContent });
 
-      // Execute each tool and collect results
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
-      for (const toolUse of toolUseBlocks) {
-        callbacks?.onToolStart?.(toolUse.name);
-        toolsUsed.push(toolUse.name);
+      // Execute tools
+      const toolResults: LLMToolResult[] = [];
+      for (const toolCall of response.toolCalls) {
+        callbacks?.onToolStart?.(toolCall.name);
+        toolsUsed.push(toolCall.name);
 
-        const result = await executeTool(
-          toolUse.name,
-          toolUse.input as Record<string, unknown>,
-          toolDeps
-        );
+        const result = await executeTool(toolCall.name, toolCall.input, toolDeps);
 
         toolResults.push({
-          type: "tool_result",
-          tool_use_id: toolUse.id,
+          tool_use_id: toolCall.id,
           content: result,
         });
 
-        callbacks?.onToolEnd?.(toolUse.name);
+        callbacks?.onToolEnd?.(toolCall.name);
       }
 
-      // Add tool results to messages
+      // Add tool results as user message (Anthropic format)
       currentMessages.push({
         role: "user",
-        content: toolResults,
+        content: toolResults.map((tr) => ({
+          type: "tool_result",
+          tool_use_id: tr.tool_use_id,
+          content: tr.content,
+        })),
       });
     }
 
-    // If we exhaust tool rounds, get a final response without tools
-    const finalResponse = await this.client.messages.create({
-      model: this.model,
-      max_tokens: 2048,
+    // Exhaust tool rounds — get final response without tools
+    const finalResponse = await this.llm.chat({
       system: SYSTEM_PROMPT,
       messages: currentMessages,
+      maxTokens: 2048,
     });
 
-    const textBlock = finalResponse.content.find(
-      (b): b is Anthropic.TextBlock => b.type === "text"
-    );
-    const responseText = textBlock?.text ?? "I'm sorry, I had trouble processing your request. Could you try again?";
+    const responseText = finalResponse.text ?? "I'm sorry, I had trouble processing your request. Could you try again?";
 
     await this.conversationManager.saveMessage(
       conversationId,
@@ -218,9 +226,6 @@ export class Concierge {
     return result;
   }
 
-  /**
-   * Start a new conversation for a user.
-   */
   async startConversation(userId: string): Promise<string> {
     return this.conversationManager.createConversation(userId);
   }

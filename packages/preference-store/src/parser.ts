@@ -16,43 +16,11 @@ export interface ParsedPreference {
   text: string;
 }
 
-/**
- * Parses natural language preference text into categorized preferences.
- * If a category is already provided, uses it directly.
- * Otherwise, uses Claude API to extract structured categories.
- */
-export async function parsePreferences(
-  inputs: PreferenceInput[],
-  anthropicApiKey: string
-): Promise<ParsedPreference[]> {
-  const results: ParsedPreference[] = [];
+export interface LLMClassifier {
+  classify(texts: string[]): Promise<{ category: string; text: string }[]>;
+}
 
-  // Inputs with explicit categories don't need parsing
-  const needsParsing: PreferenceInput[] = [];
-  for (const input of inputs) {
-    if (input.category) {
-      results.push({ category: input.category, text: input.text });
-    } else {
-      needsParsing.push(input);
-    }
-  }
-
-  if (needsParsing.length === 0) return results;
-
-  // Batch parse uncategorized preferences with Claude
-  const textsToClassify = needsParsing.map((p) => p.text);
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": anthropicApiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system: `You are a preference classifier for a padel court booking app. Given user preference texts, classify each into exactly one category and optionally split compound preferences into separate entries.
+const CLASSIFICATION_SYSTEM = `You are a preference classifier for a padel court booking app. Given user preference texts, classify each into exactly one category and optionally split compound preferences into separate entries.
 
 Categories:
 - play_style: playing style preferences (aggressive, defensive, etc.)
@@ -66,51 +34,123 @@ Categories:
 
 Respond with a JSON array of objects: [{"category": "...", "text": "..."}]
 Each text should be a clean, single preference statement. Split compound inputs.
-Return ONLY the JSON array, no other text.`,
-      messages: [
-        {
-          role: "user",
-          content: `Classify these preferences:\n${textsToClassify.map((t, i) => `${i + 1}. "${t}"`).join("\n")}`,
+Return ONLY the JSON array, no other text.`;
+
+/**
+ * Creates a classifier that calls an OpenAI-compatible API (Groq, Together, etc.)
+ */
+export function createOpenAIClassifier(apiKey: string, baseUrl: string, model: string): LLMClassifier {
+  return {
+    async classify(texts: string[]) {
+      const response = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
         },
-      ],
-    }),
-  });
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: CLASSIFICATION_SYSTEM },
+            {
+              role: "user",
+              content: `Classify these preferences:\n${texts.map((t, i) => `${i + 1}. "${t}"`).join("\n")}`,
+            },
+          ],
+          max_tokens: 1024,
+        }),
+      });
 
-  if (!response.ok) {
-    // Fallback: assign "play_style" as default category
-    for (const input of needsParsing) {
-      results.push({ category: "play_style", text: input.text });
-    }
-    return results;
-  }
+      if (!response.ok) return [];
 
-  const data = (await response.json()) as {
-    content: { type: string; text: string }[];
+      const data = (await response.json()) as {
+        choices: { message: { content: string } }[];
+      };
+      const content = data.choices[0]?.message?.content;
+      if (!content) return [];
+
+      return JSON.parse(content) as { category: string; text: string }[];
+    },
   };
+}
 
-  const textContent = data.content.find((c) => c.type === "text");
-  if (!textContent) {
-    for (const input of needsParsing) {
-      results.push({ category: "play_style", text: input.text });
+/**
+ * Creates a classifier that calls the Anthropic API directly.
+ */
+export function createAnthropicClassifier(apiKey: string, model?: string): LLMClassifier {
+  return {
+    async classify(texts: string[]) {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: model ?? "claude-sonnet-4-20250514",
+          max_tokens: 1024,
+          system: CLASSIFICATION_SYSTEM,
+          messages: [
+            {
+              role: "user",
+              content: `Classify these preferences:\n${texts.map((t, i) => `${i + 1}. "${t}"`).join("\n")}`,
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) return [];
+
+      const data = (await response.json()) as {
+        content: { type: string; text: string }[];
+      };
+      const textContent = data.content.find((c) => c.type === "text");
+      if (!textContent) return [];
+
+      return JSON.parse(textContent.text) as { category: string; text: string }[];
+    },
+  };
+}
+
+/**
+ * Parses natural language preference text into categorized preferences.
+ * Accepts either an LLMClassifier or an Anthropic API key for backwards compatibility.
+ */
+export async function parsePreferences(
+  inputs: PreferenceInput[],
+  classifierOrApiKey: LLMClassifier | string
+): Promise<ParsedPreference[]> {
+  const results: ParsedPreference[] = [];
+
+  const needsParsing: PreferenceInput[] = [];
+  for (const input of inputs) {
+    if (input.category) {
+      results.push({ category: input.category, text: input.text });
+    } else {
+      needsParsing.push(input);
     }
-    return results;
   }
+
+  if (needsParsing.length === 0) return results;
+
+  const classifier: LLMClassifier =
+    typeof classifierOrApiKey === "string"
+      ? createAnthropicClassifier(classifierOrApiKey)
+      : classifierOrApiKey;
+
+  const textsToClassify = needsParsing.map((p) => p.text);
 
   try {
-    const parsed = JSON.parse(textContent.text) as {
-      category: string;
-      text: string;
-    }[];
+    const parsed = await classifier.classify(textsToClassify);
     for (const item of parsed) {
-      const category = VALID_CATEGORIES.includes(
-        item.category as PreferenceCategory
-      )
+      const category = VALID_CATEGORIES.includes(item.category as PreferenceCategory)
         ? (item.category as PreferenceCategory)
         : "play_style";
       results.push({ category, text: item.text });
     }
   } catch {
-    // JSON parse failed — use raw texts with default category
+    // Fallback: assign default category
     for (const input of needsParsing) {
       results.push({ category: "play_style", text: input.text });
     }
