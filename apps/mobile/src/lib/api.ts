@@ -537,6 +537,86 @@ export function getConnectionRequests() {
   return api.get<{ requests: ConnectionRequest[] }>("/players/me/requests");
 }
 
+// --- Scheduled Matches ---
+
+export interface ScheduledMatchPlayer {
+  userId: string;
+  displayName: string | null;
+  avatarUrl?: string | null;
+  role: "host" | "guest";
+  rsvpStatus: "pending" | "accepted" | "declined";
+}
+
+export interface ScheduledMatchItem {
+  id: string;
+  format: "singles" | "doubles";
+  status: "upcoming" | "active" | "completed" | "cancelled";
+  scheduledAt: string;
+  playedAt?: string;
+  notes?: string;
+  createdByUserId: string;
+  player1Id?: string;
+  player2Id?: string;
+  player1Score?: number;
+  player2Score?: number;
+  player1Name?: string;
+  player2Name?: string;
+  winnerId?: string;
+  court?: { id: string; name: string; surface: string; indoor: boolean } | null;
+  venue?: { id: string; name: string; address: string } | null;
+  players: ScheduledMatchPlayer[];
+  createdAt: string;
+}
+
+export function createMatch(data: {
+  format: "singles" | "doubles";
+  scheduledAt: string;
+  courtId?: string;
+  bookingId?: string;
+  notes?: string;
+  invitees?: string[];
+}) {
+  return api.post<{ match: { id: string; format: string; status: string; scheduledAt: string } }>(
+    "/matches",
+    data,
+  );
+}
+
+export function invitePlayers(matchId: string, userIds: string[]) {
+  return api.post<{ invited: number }>(`/matches/${matchId}/invite`, { userIds });
+}
+
+export function rsvpMatch(matchId: string, rsvpStatus: "accepted" | "declined") {
+  return api.patch<{ rsvpStatus: string }>(`/matches/${matchId}/rsvp`, { rsvpStatus });
+}
+
+export function updateMatch(
+  matchId: string,
+  data: {
+    status?: string;
+    scheduledAt?: string;
+    notes?: string;
+    player1Score?: number;
+    player2Score?: number;
+  },
+) {
+  return api.patch<{ match: ScheduledMatchItem }>(`/matches/${matchId}`, data);
+}
+
+export function getUpcomingMatches(limit = 20) {
+  return api.get<{ matches: ScheduledMatchItem[] }>(`/matches/upcoming?limit=${limit}`);
+}
+
+export function getMatchHistoryFull(limit = 20, page = 1) {
+  return api.get<{ matches: ScheduledMatchItem[]; page: number; limit: number }>(
+    `/matches/history?limit=${limit}&page=${page}`,
+  );
+}
+
+export function getMatchDetail(matchId: string) {
+  return api.get<{ match: ScheduledMatchItem }>(`/matches/${matchId}`);
+}
+
 // --- Notifications ---
 
 export interface NotificationItem {

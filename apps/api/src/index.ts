@@ -21,9 +21,10 @@ import { ratingRoutes } from "./routes/ratings.js";
 import { feedbackRoutes } from "./routes/feedback.js";
 import { playerRoutes } from "./routes/players.js";
 import { notificationRoutes } from "./routes/notifications.js";
+import { matchRoutes } from "./routes/matches.js";
 import { RatingService } from "@courtiq/rating-engine";
 import { NotificationService } from "./services/notifications.js";
-import IORedis from "ioredis";
+import { Redis } from "ioredis";
 
 const DATABASE_URL = process.env["DATABASE_URL"];
 if (!DATABASE_URL) {
@@ -68,7 +69,7 @@ let notificationService: NotificationService | null = null;
 const REDIS_URL = process.env["REDIS_URL"];
 
 if (REDIS_URL) {
-  const redis = new IORedis(REDIS_URL, { maxRetriesPerRequest: null });
+  const redis = new Redis(REDIS_URL, { maxRetriesPerRequest: null });
 
   // FCM messaging — reuse firebase-admin if available
   let fcmMessaging = null;
@@ -108,6 +109,7 @@ await app.register(
     await protectedScope.register(ratingRoutes(ratingService));
     await protectedScope.register(feedbackRoutes(db));
     await protectedScope.register(playerRoutes(db));
+    await protectedScope.register(matchRoutes(db, notificationService));
 
     if (notificationService) {
       await protectedScope.register(notificationRoutes(db, notificationService));

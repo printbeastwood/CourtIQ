@@ -17,13 +17,15 @@
     "@courtiq/adapters": "*",
     "@courtiq/concierge": "*",
     "@courtiq/db": "*",
-    "@courtiq/rating-engine": "*",
     "@courtiq/preference-store": "*",
+    "@courtiq/rating-engine": "*",
     "@courtiq/shared": "*",
     "@fastify/cors": "^11.0.0",
     "@fastify/websocket": "^11.0.0",
+    "bullmq": "^5.71.1",
     "fastify": "^5.2.0",
-    "firebase-admin": "^13.7.0"
+    "firebase-admin": "^13.7.0",
+    "ioredis": "^5.10.1"
   },
   "devDependencies": {
     "tsx": "^4.19.0",

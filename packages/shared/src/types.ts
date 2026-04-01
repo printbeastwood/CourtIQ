@@ -191,6 +191,62 @@ export interface MatchWithPlayers {
   ratingChange?: number;
 }
 
+// Scheduled match types
+
+export type MatchStatus = "upcoming" | "active" | "completed" | "cancelled";
+export type MatchPlayerRole = "host" | "guest";
+export type RsvpStatus = "pending" | "accepted" | "declined";
+
+export interface MatchPlayer {
+  id?: string;
+  matchId: string;
+  userId: string;
+  role: MatchPlayerRole;
+  rsvpStatus: RsvpStatus;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface CreateMatchInput {
+  format: MatchFormat;
+  scheduledAt: string;
+  courtId?: string;
+  bookingId?: string;
+  notes?: string;
+  invitees?: string[]; // userIds to invite
+}
+
+export interface InvitePlayersInput {
+  userIds: string[];
+}
+
+export interface UpdateMatchInput {
+  status?: MatchStatus;
+  scheduledAt?: string;
+  notes?: string;
+  player1Score?: number;
+  player2Score?: number;
+}
+
+export interface ScheduledMatchDetail {
+  id: string;
+  format: MatchFormat;
+  status: MatchStatus;
+  scheduledAt: string;
+  notes?: string;
+  createdByUserId: string;
+  court?: { id: string; name: string; surface: string; indoor: boolean };
+  venue?: { id: string; name: string; address: string };
+  players: Array<{
+    userId: string;
+    displayName: string | null;
+    avatarUrl?: string | null;
+    role: MatchPlayerRole;
+    rsvpStatus: RsvpStatus;
+  }>;
+  createdAt: string;
+}
+
 // Post-match feedback types
 
 export type Satisfaction = "great" | "okay" | "poor";

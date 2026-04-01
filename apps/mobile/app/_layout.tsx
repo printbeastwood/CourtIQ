@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAuthStore, subscribeToAuthState } from "../src/stores/auth";
 import { useLocationStore } from "../src/stores/location";
+import { useNotificationListeners } from "../src/lib/notifications";
 import "../src/i18n";
 import "../global.css";
 
@@ -21,6 +22,9 @@ const queryClient = new QueryClient({
 export default function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
   const requestLocation = useLocationStore((s) => s.requestLocation);
+
+  // Register push notification listeners and handle navigation on tap
+  useNotificationListeners();
 
   useEffect(() => {
     hydrate();

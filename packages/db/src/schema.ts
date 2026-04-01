@@ -141,7 +141,10 @@ export const matches = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     courtId: uuid("court_id").references(() => courts.id),
+    bookingId: uuid("booking_id").references(() => bookings.id),
+    platformBookingRef: text("platform_booking_ref"),
     format: text("format").notNull(), // singles, doubles
+    status: text("status").default("completed").notNull(), // upcoming, active, completed, cancelled
     player1Id: uuid("player1_id")
       .references(() => users.id)
       .notNull(),
@@ -151,17 +154,45 @@ export const matches = pgTable(
     player1Score: integer("player1_score"),
     player2Score: integer("player2_score"),
     winnerId: uuid("winner_id").references(() => users.id),
+    scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
     playedAt: timestamp("played_at", { withTimezone: true }).notNull(),
     reportedById: uuid("reported_by_id")
       .references(() => users.id)
       .notNull(),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
     confirmed: boolean("confirmed").default(false).notNull(),
+    notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     index("idx_match_player1").on(t.player1Id),
     index("idx_match_player2").on(t.player2Id),
     index("idx_match_played_at").on(t.playedAt),
+    index("idx_match_status").on(t.status),
+    index("idx_match_scheduled_at").on(t.scheduledAt),
+  ]
+);
+
+export const matchPlayers = pgTable(
+  "match_players",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    matchId: uuid("match_id")
+      .references(() => matches.id)
+      .notNull(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    role: text("role").default("guest").notNull(), // host, guest
+    rsvpStatus: text("rsvp_status").default("pending").notNull(), // pending, accepted, declined
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    unique("uq_match_player").on(t.matchId, t.userId),
+    index("idx_match_player_match").on(t.matchId),
+    index("idx_match_player_user").on(t.userId),
+    index("idx_match_player_rsvp").on(t.rsvpStatus),
   ]
 );
 
