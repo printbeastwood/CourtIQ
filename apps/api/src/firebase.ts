@@ -3,7 +3,7 @@ import { getAuth, type Auth } from "firebase-admin/auth";
 
 let firebaseAuth: Auth | null = null;
 
-export function initFirebase(): Auth {
+export function initFirebase(): Auth | null {
   if (firebaseAuth) return firebaseAuth;
 
   if (getApps().length === 0) {
@@ -19,9 +19,8 @@ export function initFirebase(): Auth {
       // Application Default Credentials (e.g. on GCP / Fly.io with service account)
       initializeApp({ projectId });
     } else {
-      throw new Error(
-        "Firebase configuration missing. Set FIREBASE_PROJECT_ID (+ FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY for service account auth)"
-      );
+      console.log("Firebase not configured — running in dev mode (auth bypassed)");
+      return null;
     }
   }
 

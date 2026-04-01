@@ -11,11 +11,30 @@ declare module "fastify" {
   }
 }
 
-export function createAuthMiddleware(firebaseAuth: Auth, db: Db) {
+export function createAuthMiddleware(firebaseAuth: Auth | null, db: Db) {
   return async function authenticate(
     request: FastifyRequest,
     reply: FastifyReply
   ): Promise<void> {
+    // Dev mode: no Firebase configured — use first seeded user for all requests
+    if (!firebaseAuth) {
+      const [devUser] = await db
+        .select({ id: users.id, firebaseUid: users.firebaseUid })
+        .from(users)
+        .limit(1);
+
+      if (!devUser) {
+        reply.code(500).send({
+          error: { code: "NO_DEV_USER", message: "No users in database. Run: npm run db:seed" },
+        });
+        return;
+      }
+
+      request.userId = devUser.id;
+      request.firebaseUid = devUser.firebaseUid ?? "dev-mode";
+      return;
+    }
+
     const authHeader = request.headers.authorization;
     if (!authHeader?.startsWith("Bearer ")) {
       reply.code(401).send({

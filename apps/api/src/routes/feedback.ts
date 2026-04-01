@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { eq, sql, and, desc } from "drizzle-orm";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import type { Db } from "@courtiq/db";
 import { matchFeedback } from "@courtiq/db/schema";
 import type { Satisfaction, IssueCategory, OpponentSkillRating } from "@courtiq/shared";
 
@@ -8,7 +8,7 @@ const VALID_SATISFACTION: Satisfaction[] = ["great", "okay", "poor"];
 const VALID_ISSUES: IssueCategory[] = ["court_quality", "opponent_level", "time", "location"];
 const VALID_OPPONENT_SKILL: OpponentSkillRating[] = ["too_easy", "about_right", "too_hard"];
 
-export function feedbackRoutes(db: NodePgDatabase): FastifyPluginAsync {
+export function feedbackRoutes(db: Db): FastifyPluginAsync {
   return async (app) => {
     // Submit post-match feedback
     app.post<{

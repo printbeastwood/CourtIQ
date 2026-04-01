@@ -4,10 +4,28 @@ import type { Db } from "@courtiq/db";
 import { users } from "@courtiq/db";
 import { eq } from "drizzle-orm";
 
-export function authRoutes(firebaseAuth: Auth, db: Db): FastifyPluginAsync {
+export function authRoutes(firebaseAuth: Auth | null, db: Db): FastifyPluginAsync {
   return async (app) => {
     // Verify Firebase token and upsert user
     app.post("/auth/verify", async (request, reply) => {
+      // Dev mode: return first seeded user
+      if (!firebaseAuth) {
+        const [devUser] = await db.select().from(users).limit(1);
+        if (!devUser) {
+          reply.code(500);
+          return { error: { code: "NO_DEV_USER", message: "No users in database. Run: npm run db:seed" } };
+        }
+        return {
+          data: {
+            userId: devUser.id,
+            phone: devUser.phone,
+            displayName: devUser.displayName,
+            isNewUser: false,
+            devMode: true,
+          },
+        };
+      }
+
       const authHeader = request.headers.authorization;
       if (!authHeader?.startsWith("Bearer ")) {
         reply.code(401);
