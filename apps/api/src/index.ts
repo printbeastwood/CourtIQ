@@ -19,7 +19,11 @@ import { conciergeRoutes } from "./routes/concierge.js";
 import { bookingRoutes } from "./routes/bookings.js";
 import { ratingRoutes } from "./routes/ratings.js";
 import { feedbackRoutes } from "./routes/feedback.js";
+import { playerRoutes } from "./routes/players.js";
+import { notificationRoutes } from "./routes/notifications.js";
 import { RatingService } from "@courtiq/rating-engine";
+import { NotificationService } from "./services/notifications.js";
+import IORedis from "ioredis";
 
 const DATABASE_URL = process.env["DATABASE_URL"];
 if (!DATABASE_URL) {
@@ -59,6 +63,28 @@ if (ANTHROPIC_API_KEY && preferenceStore) {
 
 const ratingService = new RatingService(db);
 
+// Initialize notification service (optional — requires Redis)
+let notificationService: NotificationService | null = null;
+const REDIS_URL = process.env["REDIS_URL"];
+
+if (REDIS_URL) {
+  const redis = new IORedis(REDIS_URL, { maxRetriesPerRequest: null });
+
+  // FCM messaging — reuse firebase-admin if available
+  let fcmMessaging = null;
+  try {
+    const { getMessaging } = await import("firebase-admin/messaging");
+    fcmMessaging = getMessaging();
+  } catch {
+    console.log("FCM messaging not available — notifications will be queued but not delivered");
+  }
+
+  notificationService = new NotificationService({ db, redis, fcm: fcmMessaging });
+  console.log("Notification service enabled (BullMQ + Redis)");
+} else {
+  console.log("Notification service disabled (REDIS_URL required)");
+}
+
 const app = Fastify({ logger: true });
 
 await app.register(cors, { origin: true });
@@ -81,6 +107,12 @@ await app.register(
     await protectedScope.register(bookingRoutes(db));
     await protectedScope.register(ratingRoutes(ratingService));
     await protectedScope.register(feedbackRoutes(db));
+    await protectedScope.register(playerRoutes(db));
+
+    if (notificationService) {
+      await protectedScope.register(notificationRoutes(db, notificationService));
+      console.log("Notification routes enabled");
+    }
 
     if (preferenceStore) {
       await protectedScope.register(preferenceRoutes(preferenceStore));
@@ -100,6 +132,15 @@ await app.register(
 
 const port = parseInt(process.env["PORT"] || "3000", 10);
 const host = process.env["HOST"] || "0.0.0.0";
+
+// Graceful shutdown
+const shutdown = async () => {
+  await app.close();
+  await notificationService?.close();
+  process.exit(0);
+};
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 
 try {
   await app.listen({ port, host });

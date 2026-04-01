@@ -98,11 +98,45 @@
     "next": "ถัดไป",
     "thb": "บาท"
   },
+  "players": {
+    "title": "ผู้เล่น",
+    "discover": "ค้นหาผู้เล่น",
+    "search_placeholder": "ค้นหาตามชื่อ...",
+    "friends": "เพื่อน",
+    "requests": "คำขอ",
+    "no_players": "ไม่พบผู้เล่น",
+    "no_friends": "ยังไม่มีเพื่อน",
+    "no_requests": "ไม่มีคำขอที่รอดำเนินการ",
+    "connect": "เชื่อมต่อ",
+    "pending": "รอดำเนินการ",
+    "connected": "เชื่อมต่อแล้ว",
+    "accept": "ยอมรับ",
+    "decline": "ปฏิเสธ",
+    "remove": "ลบ",
+    "rating": "เรทติ้ง",
+    "games_played": "เกม",
+    "unrated": "ยังไม่มีเรทติ้ง",
+    "send_request": "ส่งคำขอเป็นเพื่อน",
+    "request_sent": "ส่งคำขอแล้ว",
+    "view_profile": "ดูโปรไฟล์",
+    "frequency": {
+      "daily": "ทุกวัน",
+      "weekly": "ทุกสัปดาห์",
+      "biweekly": "สองสัปดาห์ครั้ง",
+      "monthly": "ทุกเดือน",
+      "occasional": "เป็นครั้งคราว"
+    },
+    "filter_rating": "กรองตามเรทติ้ง",
+    "min_rating": "เรทติ้งต่ำสุด",
+    "max_rating": "เรทติ้งสูงสุด",
+    "apply_filters": "ใช้"
+  },
   "tabs": {
     "home": "หน้าแรก",
     "search": "ค้นหา",
     "concierge": "คอนเซียร์จ",
     "bookings": "การจอง",
+    "players": "ผู้เล่น",
     "profile": "โปรไฟล์"
   }
 }

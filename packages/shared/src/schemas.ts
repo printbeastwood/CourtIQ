@@ -78,3 +78,32 @@ export const bulkPreferencesSchema = z.object({
 export type StorePreferenceInput = z.infer<typeof storePreferenceSchema>;
 export type QueryPreferencesInput = z.infer<typeof queryPreferencesSchema>;
 export type BulkPreferencesInput = z.infer<typeof bulkPreferencesSchema>;
+
+// Player social schemas
+
+export const playFrequencySchema = z.enum([
+  "daily",
+  "weekly",
+  "biweekly",
+  "monthly",
+  "occasional",
+]);
+
+export const playerProfileInputSchema = z.object({
+  displayName: z.string().min(1).max(100),
+  avatarUrl: z.string().url().optional(),
+  bio: z.string().max(500).optional(),
+  preferredLocations: z.array(z.string().max(100)).max(10).optional().default([]),
+  playFrequency: playFrequencySchema.optional(),
+});
+
+export const playerDiscoverySchema = z.object({
+  minRating: z.coerce.number().optional(),
+  maxRating: z.coerce.number().optional(),
+  playFrequency: playFrequencySchema.optional(),
+  search: z.string().max(100).optional(),
+  page: z.coerce.number().int().positive().optional().default(1),
+  limit: z.coerce.number().int().positive().max(50).optional().default(20),
+});
+
+export type PlayerDiscoveryQuery = z.infer<typeof playerDiscoverySchema>;

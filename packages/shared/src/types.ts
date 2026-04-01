@@ -228,3 +228,97 @@ export interface FeedbackStats {
   poor: number;
   satisfactionRate: number; // percentage of "great" ratings
 }
+
+// Player social types
+
+export type ConnectionStatus = "pending" | "accepted" | "blocked";
+export type PlayFrequency = "daily" | "weekly" | "biweekly" | "monthly" | "occasional";
+
+export interface PlayerProfile {
+  id?: string;
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  bio?: string;
+  preferredLocations: string[];
+  playFrequency?: PlayFrequency;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Connection {
+  id?: string;
+  userId: string;
+  friendId: string;
+  status: ConnectionStatus;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface PlayerProfileInput {
+  displayName: string;
+  avatarUrl?: string;
+  bio?: string;
+  preferredLocations?: string[];
+  playFrequency?: PlayFrequency;
+}
+
+export interface DiscoveredPlayer {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  bio?: string;
+  playFrequency?: PlayFrequency;
+  rating?: number;
+  gamesPlayed?: number;
+  confidence?: number;
+  connectionStatus?: ConnectionStatus | null;
+}
+
+export interface ConnectionWithProfile {
+  connection: Connection;
+  profile: DiscoveredPlayer;
+}
+
+// Push Notification types
+
+export type NotificationType = "post_match_feedback" | "booking_reminder" | "match_invite" | "system";
+export type NotificationStatus = "pending" | "sent" | "failed" | "cancelled";
+export type DevicePlatform = "ios" | "android";
+
+export interface DeviceToken {
+  id?: string;
+  userId: string;
+  token: string;
+  platform: DevicePlatform;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Notification {
+  id?: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  status: NotificationStatus;
+  scheduledFor?: Date;
+  sentAt?: Date;
+  errorMessage?: string;
+  createdAt?: Date;
+}
+
+export interface ScheduleNotificationInput {
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data?: Record<string, unknown>;
+  sendAt?: Date; // If omitted, sends immediately
+}
+
+export interface RegisterDeviceInput {
+  token: string;
+  platform: DevicePlatform;
+}

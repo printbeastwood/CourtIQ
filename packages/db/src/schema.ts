@@ -239,6 +239,86 @@ export const matchFeedback = pgTable(
   ]
 );
 
+export const playerProfiles = pgTable("player_profiles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .references(() => users.id)
+    .unique()
+    .notNull(),
+  displayName: text("display_name").notNull(),
+  avatarUrl: text("avatar_url"),
+  bio: text("bio"),
+  preferredLocations: jsonb("preferred_locations").$type<string[]>().default([]),
+  playFrequency: text("play_frequency"), // daily, weekly, biweekly, monthly, occasional
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const connections = pgTable(
+  "connections",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    friendId: uuid("friend_id")
+      .references(() => users.id)
+      .notNull(),
+    status: text("status").default("pending").notNull(), // pending, accepted, blocked
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    unique("uq_connection_pair").on(t.userId, t.friendId),
+    index("idx_connection_user").on(t.userId),
+    index("idx_connection_friend").on(t.friendId),
+    index("idx_connection_status").on(t.status),
+  ]
+);
+
+export const deviceTokens = pgTable(
+  "device_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    token: text("token").notNull(),
+    platform: text("platform").notNull(), // ios, android
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    unique("uq_device_token").on(t.token),
+    index("idx_device_token_user").on(t.userId),
+  ]
+);
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    type: text("type").notNull(), // post_match_feedback, booking_reminder, match_invite, system
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    data: jsonb("data").$type<Record<string, unknown>>().default({}),
+    status: text("status").default("pending").notNull(), // pending, sent, failed, cancelled
+    scheduledFor: timestamp("scheduled_for", { withTimezone: true }),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    errorMessage: text("error_message"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_notification_user").on(t.userId),
+    index("idx_notification_status").on(t.status),
+    index("idx_notification_scheduled").on(t.scheduledFor),
+    index("idx_notification_type").on(t.userId, t.type),
+  ]
+);
+
 export const adapterHealthLog = pgTable("adapter_health_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   platform: text("platform").notNull(),

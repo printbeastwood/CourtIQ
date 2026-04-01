@@ -46,6 +46,8 @@ export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body: unknown) =>
     request<T>(path, { method: "POST", body: JSON.stringify(body) }),
+  put: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: "PUT", body: JSON.stringify(body) }),
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
@@ -425,4 +427,157 @@ export function submitSessionFeedback(data: {
 
 export function getFeedbackStats(playerId: string) {
   return api.get<FeedbackStatsResponse>(`/players/${playerId}/feedback-stats`);
+}
+
+// --- Players / Social ---
+
+export interface PlayerProfileResponse {
+  profile: {
+    userId: string;
+    displayName: string;
+    avatarUrl: string | null;
+    bio: string | null;
+    playFrequency: string | null;
+    preferredLocations?: string[];
+    rating?: number | null;
+    gamesPlayed?: number;
+    confidence?: number | null;
+    connectionStatus?: string | null;
+  } | null;
+}
+
+export interface DiscoveredPlayerItem {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  playFrequency: string | null;
+  rating: number | null;
+  gamesPlayed: number;
+  confidence: number | null;
+  connectionStatus: string | null;
+}
+
+export interface ConnectionItem {
+  connectionId: string;
+  status: string;
+  connectedAt: string;
+  isIncoming: boolean;
+  profile: DiscoveredPlayerItem;
+}
+
+export interface ConnectionRequest {
+  connectionId: string;
+  senderId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  sentAt: string;
+}
+
+export function getMyProfile() {
+  return api.get<PlayerProfileResponse>("/players/me/profile");
+}
+
+export function upsertMyProfile(data: {
+  displayName: string;
+  avatarUrl?: string;
+  bio?: string;
+  preferredLocations?: string[];
+  playFrequency?: string;
+}) {
+  return api.put<PlayerProfileResponse>("/players/me/profile", data);
+}
+
+export function getPlayerProfile(playerId: string) {
+  return api.get<PlayerProfileResponse>(`/players/${playerId}/profile`);
+}
+
+export function discoverPlayers(params: {
+  search?: string;
+  minRating?: number;
+  maxRating?: number;
+  playFrequency?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v != null) qs.set(k, String(v));
+  }
+  return api.get<{ players: DiscoveredPlayerItem[]; page: number; limit: number }>(
+    `/players/discover?${qs}`,
+  );
+}
+
+export function sendConnectionRequest(playerId: string) {
+  return api.post<{ connection: { id: string; status: string }; action: string }>(
+    `/players/${playerId}/connect`,
+    {},
+  );
+}
+
+export function respondToConnection(connectionId: string, action: "accept" | "decline" | "block") {
+  return api.patch<{ connection?: { id: string; status: string }; status?: string }>(
+    `/connections/${connectionId}`,
+    { action },
+  );
+}
+
+export function removeConnection(connectionId: string) {
+  return api.delete<{ status: string }>(`/connections/${connectionId}`);
+}
+
+export function getMyConnections(status = "accepted", page = 1, limit = 50) {
+  return api.get<{ connections: ConnectionItem[]; page: number; limit: number }>(
+    `/players/me/connections?status=${status}&page=${page}&limit=${limit}`,
+  );
+}
+
+export function getConnectionRequests() {
+  return api.get<{ requests: ConnectionRequest[] }>("/players/me/requests");
+}
+
+// --- Notifications ---
+
+export interface NotificationItem {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  status: string;
+  scheduledFor: string | null;
+  sentAt: string | null;
+  createdAt: string;
+}
+
+export interface DeviceItem {
+  id: string;
+  platform: string;
+  createdAt: string;
+}
+
+export function registerDevice(token: string, platform: "ios" | "android") {
+  return api.post<{ device: { id: string; token: string; platform: string } }>(
+    "/devices/register",
+    { token, platform },
+  );
+}
+
+export function removeDevice(tokenId: string) {
+  return api.delete<{ success: boolean }>(`/devices/${tokenId}`);
+}
+
+export function getMyDevices() {
+  return api.get<{ devices: DeviceItem[] }>("/devices");
+}
+
+export function getNotifications(limit = 20) {
+  return api.get<{ notifications: NotificationItem[] }>(
+    `/notifications?limit=${limit}`,
+  );
+}
+
+export function cancelNotification(notificationId: string) {
+  return api.delete<{ success: boolean }>(`/notifications/${notificationId}`);
 }

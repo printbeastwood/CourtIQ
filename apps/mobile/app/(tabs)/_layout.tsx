@@ -48,6 +48,27 @@ function CalendarIcon({ size = 22, color = "#94A3B8" }: { size?: number; color?:
   );
 }
 
+function PeopleIcon({ size = 22, color = "#94A3B8" }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={9} cy={8} r={3.5} stroke={color} strokeWidth={1.5} />
+      <Path
+        d="M16.5 21c0-2.76-3.36-5-7.5-5s-7.5 2.24-7.5 5"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+      />
+      <Circle cx={17} cy={9} r={2.5} stroke={color} strokeWidth={1.5} />
+      <Path
+        d="M22.5 21c0-2.07-2.01-3.75-4.5-3.75"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
 function UserIcon({ size = 22, color = "#94A3B8" }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -150,6 +171,18 @@ export default function TabsLayout() {
             <TabIcon
               icon={<CalendarIcon color={focused ? "#2563EB" : "#94A3B8"} />}
               label={t("tabs.bookings")}
+              focused={focused}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="players"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              icon={<PeopleIcon color={focused ? "#2563EB" : "#94A3B8"} />}
+              label={t("tabs.players")}
               focused={focused}
             />
           ),

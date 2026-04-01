@@ -98,11 +98,45 @@
     "next": "Next",
     "thb": "THB"
   },
+  "players": {
+    "title": "Players",
+    "discover": "Discover Players",
+    "search_placeholder": "Search by name...",
+    "friends": "Friends",
+    "requests": "Requests",
+    "no_players": "No players found",
+    "no_friends": "No friends yet",
+    "no_requests": "No pending requests",
+    "connect": "Connect",
+    "pending": "Pending",
+    "connected": "Connected",
+    "accept": "Accept",
+    "decline": "Decline",
+    "remove": "Remove",
+    "rating": "Rating",
+    "games_played": "Games",
+    "unrated": "Unrated",
+    "send_request": "Send Friend Request",
+    "request_sent": "Request Sent",
+    "view_profile": "View Profile",
+    "frequency": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "biweekly": "Biweekly",
+      "monthly": "Monthly",
+      "occasional": "Occasionally"
+    },
+    "filter_rating": "Filter by Rating",
+    "min_rating": "Min Rating",
+    "max_rating": "Max Rating",
+    "apply_filters": "Apply"
+  },
   "tabs": {
     "home": "Home",
     "search": "Search",
     "concierge": "Concierge",
     "bookings": "Bookings",
+    "players": "Players",
     "profile": "Profile"
   }
 }
