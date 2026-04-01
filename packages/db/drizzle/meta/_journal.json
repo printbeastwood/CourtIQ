@@ -15,6 +15,13 @@
       "when": 1775014618930,
       "tag": "0001_add_player_profiles_connections",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775017409418,
+      "tag": "0002_add_match_scheduling",
+      "breakpoints": true
     }
   ]
 }

@@ -8,8 +8,10 @@ import { Card, Button, Badge, SurfaceBadge, RacketIcon } from "@courtiq/ui";
 import {
   fetchVenues,
   searchSlots,
+  getUpcomingMatches,
   type VenueListResponse,
   type SlotSearchResponse,
+  type ScheduledMatchItem,
 } from "../../src/lib/api";
 import { useLocationStore } from "../../src/stores/location";
 import { useAuthStore } from "../../src/stores/auth";
@@ -52,8 +54,14 @@ export default function HomeScreen() {
     enabled: latitude != null,
   });
 
+  const upcomingQuery = useQuery({
+    queryKey: ["upcomingMatches", "home"],
+    queryFn: () => getUpcomingMatches(3),
+  });
+
   const venues = venuesQuery.data?.venues ?? [];
   const slots = slotsQuery.data?.results ?? [];
+  const upcomingMatches = upcomingQuery.data?.matches ?? [];
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -70,11 +78,12 @@ export default function HomeScreen() {
         refreshControl={
           <RefreshControl
             refreshing={
-              (venuesQuery.isRefetching || slotsQuery.isRefetching) ?? false
+              (venuesQuery.isRefetching || slotsQuery.isRefetching || upcomingQuery.isRefetching) ?? false
             }
             onRefresh={() => {
               venuesQuery.refetch();
               slotsQuery.refetch();
+              upcomingQuery.refetch();
             }}
           />
         }
@@ -109,6 +118,103 @@ export default function HomeScreen() {
                   </Text>
                 </View>
                 <Text className="text-brand-500 text-lg">→</Text>
+              </View>
+            </Card>
+          </Pressable>
+        </Animated.View>
+
+        {/* Upcoming Matches */}
+        {upcomingMatches.length > 0 && (
+          <View className="mb-5">
+            <View className="px-5 flex-row justify-between items-center mb-3">
+              <Text className="text-lg font-semibold text-gray-900">
+                Upcoming Matches
+              </Text>
+              <Pressable onPress={() => router.push("/upcoming-matches")}>
+                <Text className="text-sm font-medium text-brand-600">
+                  View all
+                </Text>
+              </Pressable>
+            </View>
+            {upcomingMatches.map((m) => {
+              const scheduledDate = new Date(m.scheduledAt);
+              const diff = scheduledDate.getTime() - Date.now();
+              const hours = Math.floor(diff / (1000 * 60 * 60));
+              const countdown =
+                hours > 24
+                  ? `${Math.floor(hours / 24)}d`
+                  : hours > 0
+                    ? `${hours}h`
+                    : `${Math.floor(diff / (1000 * 60))}m`;
+              const accepted = m.players.filter(
+                (p) => p.rsvpStatus === "accepted",
+              ).length;
+              return (
+                <Pressable
+                  key={m.id}
+                  className="mx-5 mb-2"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/match-detail",
+                      params: { matchId: m.id },
+                    })
+                  }
+                >
+                  <Card variant="default">
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-row items-center flex-1">
+                        <View className="w-10 h-10 bg-brand-100 rounded-lg items-center justify-center mr-3">
+                          <Text className="text-brand-600 font-bold text-sm capitalize">
+                            {m.format.charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                        <View className="flex-1">
+                          <Text className="text-base font-semibold text-gray-900 capitalize">
+                            {m.format}
+                          </Text>
+                          <Text className="text-sm text-gray-500">
+                            {scheduledDate.toLocaleDateString("en-US", {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                            })}{" "}
+                            · {accepted} player{accepted !== 1 ? "s" : ""}
+                          </Text>
+                        </View>
+                      </View>
+                      <View className="bg-amber-100 px-2.5 py-1 rounded-lg">
+                        <Text className="text-sm font-bold text-amber-700">
+                          {countdown}
+                        </Text>
+                      </View>
+                    </View>
+                  </Card>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Create match quick action */}
+        <Animated.View entering={FadeInDown.delay(200).duration(300)}>
+          <Pressable
+            className="mx-5 mb-5"
+            onPress={() => router.push("/create-match")}
+          >
+            <Card variant="default">
+              <View className="flex-row items-center">
+                <View className="w-10 h-10 rounded-full bg-green-100 items-center justify-center mr-3">
+                  <Text className="text-green-600 text-lg">+</Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-base font-semibold text-gray-900">
+                    Create a Match
+                  </Text>
+                  <Text className="text-sm text-gray-500">
+                    Schedule & invite friends
+                  </Text>
+                </View>
+                <Text className="text-gray-400 text-lg">→</Text>
               </View>
             </Card>
           </Pressable>

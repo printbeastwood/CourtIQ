@@ -66,6 +66,28 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="create-match"
+            options={{
+              headerShown: false,
+              animation: "slide_from_bottom",
+              presentation: "modal",
+            }}
+          />
+          <Stack.Screen
+            name="upcoming-matches"
+            options={{
+              headerShown: false,
+              animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen
+            name="match-detail"
+            options={{
+              headerShown: false,
+              animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen
             name="match-result"
             options={{
               headerShown: false,

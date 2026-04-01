@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { eq, and, or, sql, desc, gte } from "drizzle-orm";
+import type { Db } from "@courtiq/db";
+import { eq, and, or, sql, desc } from "drizzle-orm";
 import {
   matches,
   matchPlayers,
@@ -10,8 +10,6 @@ import {
   playerProfiles,
 } from "@courtiq/db/schema";
 import type { NotificationService } from "../services/notifications.js";
-
-type Db = NodePgDatabase;
 
 export function matchRoutes(
   db: Db,
