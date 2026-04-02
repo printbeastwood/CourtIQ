@@ -458,3 +458,91 @@ export interface MigrationCredentials {
   refreshToken?: string;
   cookies?: Record<string, string>;
 }
+
+// ─── Reflink / referral system types ────────────────────────────────────────
+
+export type ReflinkTier = "player" | "influencer" | "venue" | "coach";
+export type ReflinkRewardType = "commission" | "credit";
+export type ReferralStatus = "signed_up" | "first_booking" | "qualified" | "expired";
+export type PayoutStatus = "pending" | "approved" | "paid" | "cancelled";
+export type PayoutType = "commission" | "credit" | "bonus";
+
+export interface Reflink {
+  id: string;
+  userId: string;
+  code: string;
+  tier: ReflinkTier;
+  commissionRate: number;
+  rewardType: ReflinkRewardType;
+  rewardConfig: Record<string, unknown>;
+  attributionWindowDays: number;
+  active: boolean;
+  clicks: number;
+  expiresAt?: Date;
+  createdAt: Date;
+}
+
+export interface Referral {
+  id: string;
+  reflinkId: string;
+  referrerId: string;
+  referredUserId: string;
+  status: ReferralStatus;
+  attributedAt: Date;
+  qualifiedAt?: Date;
+  bookingCount: number;
+  createdAt: Date;
+}
+
+export interface ReferralPayout {
+  id: string;
+  referrerId: string;
+  reflinkId: string;
+  referralId?: string;
+  bookingId?: string;
+  type: PayoutType;
+  amountCents: number;
+  currency: string;
+  status: PayoutStatus;
+  description?: string;
+  paidAt?: Date;
+  createdAt: Date;
+}
+
+export interface ReflinkDashboard {
+  reflink: Reflink;
+  totalClicks: number;
+  totalSignups: number;
+  totalQualified: number;
+  totalEarningsCents: number;
+  pendingPayoutCents: number;
+  recentReferrals: Referral[];
+  recentPayouts: ReferralPayout[];
+}
+
+/** Default commission rates and reward config per tier */
+export const REFLINK_TIER_DEFAULTS: Record<
+  ReflinkTier,
+  { commissionRate: number; rewardType: ReflinkRewardType; rewardConfig: Record<string, unknown> }
+> = {
+  player: {
+    commissionRate: 0,
+    rewardType: "credit",
+    rewardConfig: { creditAmountCents: 50000, creditCurrency: "THB", requiredReferralBookings: 3 },
+  },
+  influencer: {
+    commissionRate: 0.05,
+    rewardType: "commission",
+    rewardConfig: { durationMonths: 12 },
+  },
+  venue: {
+    commissionRate: 0.01,
+    rewardType: "commission",
+    rewardConfig: { appliesTo: "all_courtiq_bookings" },
+  },
+  coach: {
+    commissionRate: 0.02,
+    rewardType: "commission",
+    rewardConfig: { appliesTo: "referred_player_bookings" },
+  },
+};

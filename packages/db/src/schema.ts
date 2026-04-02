@@ -441,3 +441,90 @@ export const userConnections = pgTable(
     index("idx_connection_platform").on(t.platform, t.platformUserId),
   ]
 );
+
+// ─── Reflink / referral system tables ───────────────────────────────────────
+
+export const reflinks = pgTable(
+  "reflinks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    code: text("code").unique().notNull(), // e.g. "maria-padel", "kross-bkk"
+    tier: text("tier").notNull(), // player, influencer, venue, coach
+    commissionRate: real("commission_rate").notNull(), // decimal: 0.05 = 5%
+    rewardType: text("reward_type").notNull(), // commission, credit
+    rewardConfig: jsonb("reward_config").$type<Record<string, unknown>>().default({}),
+    // e.g. { creditAmount: 500, creditCurrency: "THB", requiredReferrals: 3 }
+    attributionWindowDays: integer("attribution_window_days").default(30).notNull(),
+    active: boolean("active").default(true).notNull(),
+    clicks: integer("clicks").default(0).notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_reflink_user").on(t.userId),
+    index("idx_reflink_code").on(t.code),
+    index("idx_reflink_tier").on(t.tier),
+  ]
+);
+
+export const referrals = pgTable(
+  "referrals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    reflinkId: uuid("reflink_id")
+      .references(() => reflinks.id)
+      .notNull(),
+    referrerId: uuid("referrer_id")
+      .references(() => users.id)
+      .notNull(),
+    referredUserId: uuid("referred_user_id")
+      .references(() => users.id)
+      .notNull(),
+    status: text("status").default("signed_up").notNull(), // signed_up, first_booking, qualified, expired
+    attributedAt: timestamp("attributed_at", { withTimezone: true }).defaultNow().notNull(),
+    qualifiedAt: timestamp("qualified_at", { withTimezone: true }),
+    bookingCount: integer("booking_count").default(0).notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_referral_reflink").on(t.reflinkId),
+    index("idx_referral_referrer").on(t.referrerId),
+    index("idx_referral_referred").on(t.referredUserId),
+    unique("uq_referral_user").on(t.reflinkId, t.referredUserId),
+  ]
+);
+
+export const referralPayouts = pgTable(
+  "referral_payouts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    referrerId: uuid("referrer_id")
+      .references(() => users.id)
+      .notNull(),
+    reflinkId: uuid("reflink_id")
+      .references(() => reflinks.id)
+      .notNull(),
+    referralId: uuid("referral_id")
+      .references(() => referrals.id),
+    bookingId: uuid("booking_id")
+      .references(() => bookings.id),
+    type: text("type").notNull(), // commission, credit, bonus
+    amountCents: integer("amount_cents").notNull(),
+    currency: text("currency").default("THB").notNull(),
+    status: text("status").default("pending").notNull(), // pending, approved, paid, cancelled
+    description: text("description"),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_payout_referrer").on(t.referrerId),
+    index("idx_payout_status").on(t.status),
+    index("idx_payout_reflink").on(t.reflinkId),
+  ]
+);
