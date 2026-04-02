@@ -750,6 +750,28 @@ export const referrals = pgTable(
   ]
 );
 
+// ─── Venue operator auth (dashboard login) ─────────────────────────────────
+
+export const venueOperators = pgTable(
+  "venue_operators",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    venueId: uuid("venue_id")
+      .references(() => venues.id)
+      .notNull(),
+    email: text("email").unique().notNull(),
+    passwordHash: text("password_hash").notNull(),
+    name: text("name"),
+    role: text("role").default("admin").notNull(), // admin, staff
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_venue_operator_venue").on(t.venueId),
+    index("idx_venue_operator_email").on(t.email),
+  ]
+);
+
 export const referralPayouts = pgTable(
   "referral_payouts",
   {

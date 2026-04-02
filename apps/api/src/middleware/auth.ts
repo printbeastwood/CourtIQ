@@ -3,11 +3,16 @@ import type { Auth } from "firebase-admin/auth";
 import type { Db } from "@courtiq/db";
 import { users } from "@courtiq/db";
 import { eq } from "drizzle-orm";
+import { verifyToken } from "../routes/venue-auth.js";
 
 declare module "fastify" {
   interface FastifyRequest {
     userId: string;
     firebaseUid: string;
+    /** Set when the caller is a venue operator (venue dashboard token) */
+    venueOperatorId?: string;
+    /** Set when the caller is a venue operator */
+    venueId?: string;
   }
 }
 
@@ -45,6 +50,18 @@ export function createAuthMiddleware(firebaseAuth: Auth | null, db: Db) {
 
     const token = authHeader.slice(7);
 
+    // Try venue operator token first (HMAC-signed, cheap to verify)
+    const venuePayload = verifyToken(token);
+    if (venuePayload && typeof venuePayload["sub"] === "string" && typeof venuePayload["venueId"] === "string") {
+      request.venueOperatorId = venuePayload["sub"] as string;
+      request.venueId = venuePayload["venueId"] as string;
+      // Use the operator id as userId for venue-scoped requests
+      request.userId = venuePayload["sub"] as string;
+      request.firebaseUid = "venue-operator";
+      return;
+    }
+
+    // Fall back to Firebase ID token
     try {
       const decoded = await firebaseAuth.verifyIdToken(token);
 

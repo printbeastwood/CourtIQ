@@ -1,5 +1,15 @@
 import { createDb } from "./index.js";
-import { venues, courts, availabilitySlots, users } from "./schema.js";
+import { venues, courts, availabilitySlots, users, venueOperators } from "./schema.js";
+import { scrypt, randomBytes } from "node:crypto";
+import { promisify } from "node:util";
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string): Promise<string> {
+  const salt = randomBytes(16).toString("hex");
+  const derived = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${salt}:${derived.toString("hex")}`;
+}
 
 const DATABASE_URL = process.env["DATABASE_URL"];
 if (!DATABASE_URL) {
@@ -177,6 +187,55 @@ async function seed() {
     },
   ]);
   console.log("Created 2 demo users");
+
+  // --- Venue Operators (demo accounts for dashboard login) ---
+  const demoPassword = await hashPassword("demo1234");
+
+  await db.insert(venueOperators).values([
+    {
+      venueId: baanPadel.id,
+      email: "admin@baanpadel.com",
+      passwordHash: demoPassword,
+      name: "Baan Padel Admin",
+      role: "admin",
+    },
+    {
+      venueId: noDrama.id,
+      email: "admin@nodramapadel.com",
+      passwordHash: demoPassword,
+      name: "No Drama Admin",
+      role: "admin",
+    },
+    {
+      venueId: padelCo.id,
+      email: "admin@thepadelco.com",
+      passwordHash: demoPassword,
+      name: "Padel Co Admin",
+      role: "admin",
+    },
+    {
+      venueId: krossIndoor.id,
+      email: "admin@krosspadel.com",
+      passwordHash: demoPassword,
+      name: "Kross Padel Admin",
+      role: "admin",
+    },
+    {
+      venueId: padThaiPadel.id,
+      email: "admin@padthaipadel.com",
+      passwordHash: demoPassword,
+      name: "Pad Thai Padel Admin",
+      role: "admin",
+    },
+    {
+      venueId: bangkokPadel.id,
+      email: "admin@bangkokpadel.com",
+      passwordHash: demoPassword,
+      name: "Bangkok Padel Admin",
+      role: "admin",
+    },
+  ]);
+  console.log("Created 6 venue operator accounts (password: demo1234)");
 
   console.log("\nSeed complete!");
   process.exit(0);

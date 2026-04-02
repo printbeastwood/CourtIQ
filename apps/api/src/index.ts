@@ -39,6 +39,7 @@ import { referralRoutes } from "./routes/referrals.js";
 import { venueOnboardingRoutes } from "./routes/venue-onboarding.js";
 import { coachRoutes } from "./routes/coaches.js";
 import { paymentRoutes } from "./routes/payments.js";
+import { venueAuthRoutes } from "./routes/venue-auth.js";
 import { webhookRoutes } from "./routes/webhooks.js";
 import { RatingService } from "@courtiq/rating-engine";
 import { NotificationService } from "./services/notifications.js";
@@ -175,6 +176,7 @@ await app.register(websocket);
 
 // === Public routes (no auth required) ===
 await app.register(authRoutes(firebaseAuth, db), { prefix: "/api/v1" });
+await app.register(venueAuthRoutes(db), { prefix: "/api/v1" });
 await app.register(venueOnboardingRoutes(db, stripeService), { prefix: "/api/v1" });
 
 // Stripe webhook (public, uses signature verification)
