@@ -2,7 +2,7 @@ FROM node:22-slim AS base
 WORKDIR /app
 
 FROM base AS deps
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 COPY apps/api/package.json apps/api/
 COPY packages/shared/package.json packages/shared/
 COPY packages/db/package.json packages/db/
@@ -13,7 +13,7 @@ COPY packages/rating-engine/package.json packages/rating-engine/
 RUN npm ci --omit=dev
 
 FROM base AS builder
-COPY package.json package-lock.json turbo.json tsconfig.base.json ./
+COPY package.json package-lock.json .npmrc turbo.json tsconfig.base.json ./
 COPY apps/api/ apps/api/
 COPY packages/ packages/
 RUN npm ci
