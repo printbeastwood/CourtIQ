@@ -4,7 +4,7 @@ import type {
   MigrationData,
   ImportedMatch,
   ImportedBooking,
-  ImportedPlayerProfile,
+  MigrationPlayerProfile,
 } from "@courtiq/shared";
 
 const PADEL_MATES_API = "https://fastapi-production-fargate.padelmates.io";
@@ -77,7 +77,7 @@ export class PadelMatesMigrationAdapter implements MigrationAdapter {
     return { profile, matches, bookings, connections: [] };
   }
 
-  private async fetchProfile(headers: Record<string, string>): Promise<ImportedPlayerProfile> {
+  private async fetchProfile(headers: Record<string, string>): Promise<MigrationPlayerProfile> {
     try {
       const resp = await fetch(`${PADEL_MATES_API}/user/me/`, { headers });
       if (!resp.ok) return { metadata: {} };

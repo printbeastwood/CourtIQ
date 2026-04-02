@@ -4,7 +4,10 @@ import { useAuth } from "../auth/AuthProvider";
 
 const NAV_ITEMS = [
   { to: "/", label: "Analytics", icon: "📊" },
+  { to: "/bookings", label: "Bookings", icon: "📋" },
   { to: "/availability", label: "Availability", icon: "📅" },
+  { to: "/listing", label: "Listing", icon: "✏️" },
+  { to: "/payouts", label: "Payouts", icon: "💰" },
   { to: "/promotions", label: "Promotions", icon: "🏷️" },
   { to: "/profile", label: "Venue Profile", icon: "🏢" },
 ];

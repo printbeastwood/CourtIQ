@@ -66,12 +66,6 @@ else
   echo "✓ Redis courtiq-redis already exists"
 fi
 
-# Enable pgvector extension on the Fly Postgres database
-echo ""
-echo "Enabling pgvector extension..."
-fly postgres connect -a courtiq-db -c "CREATE EXTENSION IF NOT EXISTS vector;" 2>/dev/null || \
-  echo "  (pgvector will be enabled by the migration script on first deploy)"
-
 # Remind about required secrets
 echo ""
 echo "=============================="

@@ -3,8 +3,13 @@ import { useAuth } from "./auth/AuthProvider";
 import { DashboardLayout } from "./components/DashboardLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { ClaimPage } from "./pages/ClaimPage";
+import { OnboardingPage } from "./pages/OnboardingPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { AvailabilityPage } from "./pages/AvailabilityPage";
+import { BookingsPage } from "./pages/BookingsPage";
+import { ListingPage } from "./pages/ListingPage";
+import { PayoutsPage } from "./pages/PayoutsPage";
+import { StripeReturnPage } from "./pages/StripeReturnPage";
 import { PromotionsPage } from "./pages/PromotionsPage";
 import { ProfilePage } from "./pages/ProfilePage";
 
@@ -33,6 +38,8 @@ export function App() {
         element={user ? <Navigate to="/" replace /> : <LoginPage />}
       />
       <Route path="/claim" element={<ClaimPage />} />
+      <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route path="/stripe/return" element={<ProtectedRoute><StripeReturnPage /></ProtectedRoute>} />
 
       <Route
         element={
@@ -43,6 +50,9 @@ export function App() {
       >
         <Route index element={<AnalyticsPage />} />
         <Route path="availability" element={<AvailabilityPage />} />
+        <Route path="bookings" element={<BookingsPage />} />
+        <Route path="listing" element={<ListingPage />} />
+        <Route path="payouts" element={<PayoutsPage />} />
         <Route path="promotions" element={<PromotionsPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>

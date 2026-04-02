@@ -1,6 +1,11 @@
 import type {
   AdapterHealth,
   DateRange,
+  ImportPlatform,
+  ImportedBookingRecord,
+  ImportedContact,
+  ImportedMatchRecord,
+  ImportedPlayerProfile,
   MigrationCredentials,
   MigrationData,
   Region,
@@ -24,4 +29,20 @@ export interface MigrationAdapter {
 
   /** Extract all available user data from the platform. */
   extractUserData(credentials: MigrationCredentials): Promise<MigrationData>;
+}
+
+export interface PlatformCredentials {
+  accessToken?: string;
+  refreshToken?: string;
+  email?: string;
+  password?: string;
+  apiKey?: string;
+}
+
+export interface PlayerImportAdapter {
+  readonly platform: ImportPlatform;
+  fetchPlayerProfile(credentials: PlatformCredentials): Promise<ImportedPlayerProfile | null>;
+  fetchMatchHistory(credentials: PlatformCredentials): Promise<ImportedMatchRecord[]>;
+  fetchBookingHistory(credentials: PlatformCredentials): Promise<ImportedBookingRecord[]>;
+  fetchContacts(credentials: PlatformCredentials): Promise<ImportedContact[]>;
 }

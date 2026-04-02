@@ -7,7 +7,7 @@ import type {
   ImportedMatch,
   ImportedBooking,
   ImportedConnection,
-  ImportedPlayerProfile,
+  MigrationPlayerProfile,
 } from "@courtiq/shared";
 
 const PLAYTOMIC_API = "https://playtomic.io/api/v1";
@@ -113,7 +113,7 @@ export class PlaytomicMigrationAdapter implements MigrationAdapter {
     throw new Error("Playtomic migration requires an accessToken or email");
   }
 
-  private async fetchProfile(headers: Record<string, string>): Promise<ImportedPlayerProfile> {
+  private async fetchProfile(headers: Record<string, string>): Promise<MigrationPlayerProfile> {
     const resp = await fetch(`${PLAYTOMIC_API}/users/me`, { headers });
     if (!resp.ok) return { metadata: {} };
 

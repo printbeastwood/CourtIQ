@@ -5,7 +5,7 @@ import type {
   ImportedMatch,
   ImportedBooking,
   ImportedConnection,
-  ImportedPlayerProfile,
+  MigrationPlayerProfile,
 } from "@courtiq/shared";
 
 const RECLUB_API = "https://api.reclub.co";
@@ -81,7 +81,7 @@ export class ReclubMigrationAdapter implements MigrationAdapter {
     return { profile, matches, bookings, connections };
   }
 
-  private async fetchProfile(headers: Record<string, string>): Promise<ImportedPlayerProfile> {
+  private async fetchProfile(headers: Record<string, string>): Promise<MigrationPlayerProfile> {
     try {
       const resp = await fetch(`${RECLUB_API}/users/me`, { headers });
       if (!resp.ok) return { metadata: {} };

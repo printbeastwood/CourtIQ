@@ -4,7 +4,7 @@ import type {
   MigrationData,
   ImportedMatch,
   ImportedBooking,
-  ImportedPlayerProfile,
+  MigrationPlayerProfile,
 } from "@courtiq/shared";
 
 const MATCHI_BASE = "https://www.matchi.se";
@@ -90,7 +90,7 @@ export class MatchiMigrationAdapter implements MigrationAdapter {
     return { ...sessionCookies, ...authCookies };
   }
 
-  private async scrapeProfile(cookieHeader: string): Promise<ImportedPlayerProfile> {
+  private async scrapeProfile(cookieHeader: string): Promise<MigrationPlayerProfile> {
     try {
       const resp = await fetch(`${MATCHI_BASE}/profiles/account`, {
         headers: { Cookie: cookieHeader },

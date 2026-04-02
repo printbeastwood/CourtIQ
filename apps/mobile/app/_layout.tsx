@@ -91,6 +91,13 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="booking-detail/[id]"
+            options={{
+              headerShown: false,
+              animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen
             name="create-match"
             options={{
               headerShown: false,

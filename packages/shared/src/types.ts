@@ -427,8 +427,6 @@ export interface RegisterDeviceInput {
 
 export type MigrationPlatform = "playtomic" | "matchi" | "reclub" | "padel_mates";
 
-export type ImportJobStatus = "pending" | "running" | "completed" | "failed";
-
 export interface ImportJob {
   id: string;
   userId: string;
@@ -477,7 +475,7 @@ export interface ImportedBooking {
   metadata: Record<string, unknown>;
 }
 
-export interface ImportedPlayerProfile {
+export interface MigrationPlayerProfile {
   displayName?: string;
   rating?: number;
   ratingSystem?: string; // e.g. "playtomic_level", "matchi_rating"
@@ -489,7 +487,7 @@ export interface ImportedPlayerProfile {
 }
 
 export interface MigrationData {
-  profile?: ImportedPlayerProfile;
+  profile?: MigrationPlayerProfile;
   matches: ImportedMatch[];
   bookings: ImportedBooking[];
   connections: ImportedConnection[];
@@ -590,3 +588,88 @@ export const REFLINK_TIER_DEFAULTS: Record<
     rewardConfig: { appliesTo: "referred_player_bookings" },
   },
 };
+
+// ─── Player import types (adapter-based) ──────────────────────────────────
+
+export type ImportPlatform = "playtomic" | "matchi" | "reclub" | "padel_mates";
+export type ImportJobStatus = "pending" | "running" | "completed" | "failed" | "cancelled";
+
+export interface ImportedMatchRecord {
+  platform: ImportPlatform;
+  platformMatchId: string;
+  opponentName: string | null;
+  opponentPlatformId: string | null;
+  format: MatchFormat | null;
+  playerScore: number | null;
+  opponentScore: number | null;
+  result: "win" | "loss" | "draw" | null;
+  playedAt: string;
+  venueName: string | null;
+  courtName: string | null;
+  notes: string | null;
+}
+
+export interface ImportedBookingRecord {
+  platform: ImportPlatform;
+  platformBookingId: string;
+  venueName: string;
+  courtName: string | null;
+  startsAt: string;
+  endsAt: string | null;
+  priceCents: number | null;
+  currency: string | null;
+}
+
+export interface ImportedPlayerProfile {
+  platform: ImportPlatform;
+  platformUserId: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  rating: number | null;
+  ratingLabel: string | null;
+  preferredHand: string | null;
+  preferredPosition: string | null;
+  memberSince: string | null;
+}
+
+export interface ImportedContact {
+  platform: ImportPlatform;
+  platformUserId: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+export interface PlatformImportResult {
+  platform: ImportPlatform;
+  profile: ImportedPlayerProfile | null;
+  matches: ImportedMatchRecord[];
+  bookings: ImportedBookingRecord[];
+  contacts: ImportedContact[];
+  errors: string[];
+}
+
+export interface ImportJobSummary {
+  id: string;
+  userId: string;
+  platforms: ImportPlatform[];
+  status: ImportJobStatus;
+  progress: number;
+  totalSteps: number;
+  currentStep: string | null;
+  result: ImportJobResult | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ImportJobResult {
+  platforms: Record<ImportPlatform, {
+    matchesImported: number;
+    bookingsImported: number;
+    contactsFound: number;
+    profileImported: boolean;
+    preferencesSeeded: number;
+    errors: string[];
+  }>;
+  totalPreferencesSeeded: number;
+  aiPlayStyleSummary: string | null;
+}

@@ -516,6 +516,90 @@ export const coachingSessions = pgTable(
   ]
 );
 
+export const importJobs = pgTable(
+  "import_jobs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    platforms: jsonb("platforms").$type<string[]>().notNull(),
+    status: text("status").default("pending").notNull(), // pending, running, completed, failed, cancelled
+    progress: integer("progress").default(0).notNull(),
+    totalSteps: integer("total_steps").default(0).notNull(),
+    currentStep: text("current_step"),
+    result: jsonb("result").$type<Record<string, unknown>>(),
+    credentials: jsonb("credentials").$type<Record<string, Record<string, string>>>(),
+    errorMessage: text("error_message"),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_import_job_user").on(t.userId),
+    index("idx_import_job_status").on(t.status),
+  ]
+);
+
+export const importedMatches = pgTable(
+  "imported_matches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    importJobId: uuid("import_job_id")
+      .references(() => importJobs.id)
+      .notNull(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    platform: text("platform").notNull(),
+    platformMatchId: text("platform_match_id").notNull(),
+    opponentName: text("opponent_name"),
+    opponentPlatformId: text("opponent_platform_id"),
+    format: text("format"),
+    playerScore: integer("player_score"),
+    opponentScore: integer("opponent_score"),
+    result: text("result"), // win, loss, draw
+    playedAt: timestamp("played_at", { withTimezone: true }).notNull(),
+    venueName: text("venue_name"),
+    courtName: text("court_name"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    unique("uq_imported_match_platform").on(t.userId, t.platform, t.platformMatchId),
+    index("idx_imported_match_user").on(t.userId),
+    index("idx_imported_match_job").on(t.importJobId),
+  ]
+);
+
+export const importedBookings = pgTable(
+  "imported_bookings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    importJobId: uuid("import_job_id")
+      .references(() => importJobs.id)
+      .notNull(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    platform: text("platform").notNull(),
+    platformBookingId: text("platform_booking_id").notNull(),
+    venueName: text("venue_name").notNull(),
+    courtName: text("court_name"),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    priceCents: integer("price_cents"),
+    currency: text("currency"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    unique("uq_imported_booking_platform").on(t.userId, t.platform, t.platformBookingId),
+    index("idx_imported_booking_user").on(t.userId),
+    index("idx_imported_booking_job").on(t.importJobId),
+  ]
+);
+
 export const adapterHealthLog = pgTable("adapter_health_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   platform: text("platform").notNull(),
@@ -527,10 +611,10 @@ export const adapterHealthLog = pgTable("adapter_health_log", {
   checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-// ─── Player data migration tables ───────────────────────────────────────────
+// ─── Player data migration tables (legacy migration service) ────────────────
 
-export const importJobs = pgTable(
-  "import_jobs",
+export const migrationJobs = pgTable(
+  "migration_jobs",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id")
@@ -551,8 +635,8 @@ export const importJobs = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
-    index("idx_import_job_user").on(t.userId),
-    index("idx_import_job_status").on(t.status),
+    index("idx_migration_job_user").on(t.userId),
+    index("idx_migration_job_status").on(t.status),
   ]
 );
 
@@ -564,7 +648,7 @@ export const matchHistory = pgTable(
       .references(() => users.id)
       .notNull(),
     importJobId: uuid("import_job_id")
-      .references(() => importJobs.id),
+      .references(() => migrationJobs.id),
     platform: text("platform").notNull(),
     platformMatchId: text("platform_match_id"),
     playedAt: timestamp("played_at", { withTimezone: true }).notNull(),
@@ -594,7 +678,7 @@ export const userConnections = pgTable(
       .references(() => users.id)
       .notNull(),
     importJobId: uuid("import_job_id")
-      .references(() => importJobs.id),
+      .references(() => migrationJobs.id),
     platform: text("platform").notNull(),
     platformUserId: text("platform_user_id"),
     displayName: text("display_name").notNull(),
@@ -603,8 +687,8 @@ export const userConnections = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
-    index("idx_connection_user").on(t.userId),
-    index("idx_connection_platform").on(t.platform, t.platformUserId),
+    index("idx_user_connection_user").on(t.userId),
+    index("idx_user_connection_platform").on(t.platform, t.platformUserId),
   ]
 );
 

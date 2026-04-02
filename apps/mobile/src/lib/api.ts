@@ -258,6 +258,110 @@ export function fetchBookings() {
   return api.get<{ bookings: BookingListItem[] }>("/bookings");
 }
 
+export function fetchBookingDetail(bookingId: string) {
+  return api.get<{ booking: BookingDetail }>(`/bookings/${bookingId}`);
+}
+
+// --- Payments (Stripe) ---
+
+export interface PaymentIntentResponse {
+  paymentIntentId: string;
+  clientSecret: string;
+  ephemeralKey: string;
+  customerId: string;
+  booking: {
+    id: string;
+    status: string;
+    createdAt: string;
+  };
+  slot: {
+    id: string;
+    startsAt: string;
+    endsAt: string;
+    priceCents: number;
+    currency: string;
+  };
+  court: {
+    id: string;
+    name: string;
+    surface: string;
+    indoor: boolean;
+  };
+  venue: {
+    id: string;
+    name: string;
+    address: string;
+    sourcePlatform: string;
+  };
+  breakdown: {
+    subtotalCents: number;
+    commissionCents: number;
+    commissionRate: number;
+    totalCents: number;
+    currency: string;
+  };
+}
+
+export interface BookingDetail {
+  id: string;
+  status: "pending" | "confirmed" | "cancelled" | "payment_failed";
+  bookingMethod: "direct" | "redirect" | "concierge";
+  paymentStatus: "pending" | "succeeded" | "failed" | "refunded" | null;
+  paymentIntentId: string | null;
+  createdAt: string;
+  confirmedAt: string | null;
+  cancelledAt: string | null;
+  slot: {
+    startsAt: string;
+    endsAt: string;
+    priceCents: number;
+    currency: string;
+    sourceBookingUrl: string;
+  };
+  venue: {
+    id: string;
+    name: string;
+    address: string;
+    sourcePlatform: string;
+  };
+  court: {
+    id: string;
+    name: string;
+    surface: string;
+    indoor: boolean;
+  };
+  breakdown: {
+    subtotalCents: number;
+    commissionCents: number;
+    commissionRate: number;
+    totalCents: number;
+    currency: string;
+  } | null;
+  cancellation: {
+    refundStatus: "pending" | "processed" | "denied" | null;
+    refundAmountCents: number | null;
+    reason: string | null;
+  } | null;
+}
+
+export function createPaymentIntent(slotId: string) {
+  return api.post<PaymentIntentResponse>("/bookings/payment-intent", { slotId });
+}
+
+export function confirmPayment(bookingId: string, paymentIntentId: string) {
+  return api.post<{ booking: { id: string; status: string; confirmedAt: string } }>(
+    `/bookings/${bookingId}/confirm-payment`,
+    { paymentIntentId },
+  );
+}
+
+export function cancelBooking(bookingId: string, reason?: string) {
+  return api.post<{
+    booking: { id: string; status: string; cancelledAt: string };
+    refund: { status: string; amountCents: number } | null;
+  }>(`/bookings/${bookingId}/cancel`, { reason });
+}
+
 // --- Concierge ---
 
 export function createConversation(userId: string) {

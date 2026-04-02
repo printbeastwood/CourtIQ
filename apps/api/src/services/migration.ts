@@ -1,5 +1,5 @@
 import { eq, and } from "drizzle-orm";
-import { importJobs, matchHistory, userConnections, type Db } from "@courtiq/db";
+import { migrationJobs, matchHistory, userConnections, type Db } from "@courtiq/db";
 import { getMigrationAdapter } from "@courtiq/adapters";
 import type { PreferenceStore } from "@courtiq/preference-store";
 import type {
@@ -38,7 +38,7 @@ export class MigrationService {
 
     // Create the job record
     const [job] = await this.db
-      .insert(importJobs)
+      .insert(migrationJobs)
       .values({
         userId,
         platform,
@@ -60,8 +60,8 @@ export class MigrationService {
   async getJobStatus(jobId: string, userId: string): Promise<ImportJob | null> {
     const [job] = await this.db
       .select()
-      .from(importJobs)
-      .where(and(eq(importJobs.id, jobId), eq(importJobs.userId, userId)));
+      .from(migrationJobs)
+      .where(and(eq(migrationJobs.id, jobId), eq(migrationJobs.userId, userId)));
 
     return job ? this.jobRowToImportJob(job) : null;
   }
@@ -69,9 +69,9 @@ export class MigrationService {
   async getUserImportHistory(userId: string): Promise<ImportJob[]> {
     const jobs = await this.db
       .select()
-      .from(importJobs)
-      .where(eq(importJobs.userId, userId))
-      .orderBy(importJobs.createdAt);
+      .from(migrationJobs)
+      .where(eq(migrationJobs.userId, userId))
+      .orderBy(migrationJobs.createdAt);
 
     return jobs.map((j) => this.jobRowToImportJob(j));
   }
@@ -367,12 +367,12 @@ Guidelines:
 
   private async updateJob(jobId: string, updates: Record<string, unknown>): Promise<void> {
     await this.db
-      .update(importJobs)
+      .update(migrationJobs)
       .set(updates)
-      .where(eq(importJobs.id, jobId));
+      .where(eq(migrationJobs.id, jobId));
   }
 
-  private jobRowToImportJob(row: typeof importJobs.$inferSelect): ImportJob {
+  private jobRowToImportJob(row: typeof migrationJobs.$inferSelect): ImportJob {
     return {
       id: row.id,
       userId: row.userId,

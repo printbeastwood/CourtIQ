@@ -11,9 +11,13 @@ if (!DATABASE_URL) {
 async function runMigrations() {
   const client = postgres(DATABASE_URL as string, { max: 1 });
 
-  // Enable pgvector extension before running schema migrations
-  await client`CREATE EXTENSION IF NOT EXISTS vector`;
-  console.log("pgvector extension enabled");
+  // Enable pgvector if available (Fly Postgres may not have it)
+  try {
+    await client`CREATE EXTENSION IF NOT EXISTS vector`;
+    console.log("pgvector extension enabled");
+  } catch {
+    console.log("pgvector extension not available — preference embeddings will be skipped");
+  }
 
   const db = drizzle(client);
   console.log("Running migrations...");

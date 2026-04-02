@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1774998307421,
-      "tag": "0000_neat_sheva_callister",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1775014618930,
-      "tag": "0001_add_player_profiles_connections",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1775017409418,
-      "tag": "0002_add_match_scheduling",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1775065135944,
-      "tag": "0003_large_penance",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1775065574112,
-      "tag": "0004_plain_vanisher",
+      "when": 1775108407830,
+      "tag": "0000_overjoyed_pet_avengers",
       "breakpoints": true
     }
   ]
