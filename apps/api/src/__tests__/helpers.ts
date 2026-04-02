@@ -338,6 +338,161 @@ export async function buildTestApp(opts: {
   return app;
 }
 
+// ──────────────────── Referral Fixtures ────────────────────
+
+export const TEST_REFERRAL_CODE_ID = "ref-code-1111-2222-3333-444444444444";
+export const TEST_REFERRAL_CODE = "CIQ123";
+export const TEST_REFERRER_ID = "aaaaaaaa-9999-8888-7777-666666666666";
+
+export const testReferralCode = {
+  id: TEST_REFERRAL_CODE_ID,
+  ownerId: TEST_REFERRER_ID,
+  code: TEST_REFERRAL_CODE,
+  ownerType: "player",
+  active: true,
+  clickCount: 5,
+  claimCount: 2,
+  createdAt: new Date("2026-03-01T00:00:00Z"),
+};
+
+export const testReferralClaim = {
+  id: "ref-claim-1111-2222-3333-444444444444",
+  codeId: TEST_REFERRAL_CODE_ID,
+  referrerId: TEST_REFERRER_ID,
+  refereeId: TEST_USER_ID,
+  status: "pending",
+  claimedAt: new Date(),
+  confirmedAt: null,
+};
+
+// ──────────────────── Extended Mock DB ────────────────────
+
+/**
+ * Build a mock DB that returns different results for sequential select() calls.
+ * Each call to db.select() pops the next result from the queue.
+ */
+export function mockDbSequential(selectResults: unknown[][]): Db {
+  let callIndex = 0;
+
+  function makeChain(data: unknown[]) {
+    const chain: Record<string, unknown> = {};
+    chain.from = vi.fn().mockReturnValue(chain);
+    chain.where = vi.fn().mockReturnValue(chain);
+    chain.limit = vi.fn().mockReturnValue(chain);
+    chain.offset = vi.fn().mockReturnValue(chain);
+    chain.orderBy = vi.fn().mockReturnValue(chain);
+    chain.groupBy = vi.fn().mockResolvedValue(data);
+    chain.innerJoin = vi.fn().mockReturnValue(chain);
+    chain.then = (resolve: (v: unknown) => void) => resolve(data);
+    return chain;
+  }
+
+  const selectFn = vi.fn().mockImplementation(() => {
+    const result = selectResults[callIndex] ?? [];
+    callIndex++;
+    return makeChain(result);
+  });
+
+  // Track insert calls with their return values
+  const insertResults: unknown[][] = [];
+  let insertIndex = 0;
+
+  return {
+    select: selectFn,
+    insert: vi.fn().mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        returning: vi.fn().mockImplementation(() => {
+          const result = insertResults[insertIndex] ?? [testBooking];
+          insertIndex++;
+          return Promise.resolve(result);
+        }),
+      }),
+    }),
+    update: vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ ...testBooking, status: "confirmed" }]),
+          then: (resolve: (v: unknown) => void) => resolve(undefined),
+        }),
+      }),
+    }),
+    delete: vi.fn().mockReturnValue({
+      where: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([]),
+      }),
+    }),
+    _setInsertResults(results: unknown[][]) {
+      insertResults.push(...results);
+    },
+  } as unknown as Db;
+}
+
+// ──────────────────── Full E2E App Builder ────────────────────
+
+/**
+ * Build a test app with ALL route plugins registered — for E2E flow tests
+ * that need to chain multiple endpoints together.
+ */
+export async function buildE2ETestApp(opts: {
+  db?: Db;
+  firebaseAuth?: Auth;
+  preferenceStore?: PreferenceStore;
+  concierge?: Concierge;
+  ratingService?: RatingService;
+} = {}): Promise<FastifyInstance> {
+  const db = opts.db ?? mockDb();
+  const firebaseAuth = opts.firebaseAuth ?? mockFirebaseAuth();
+  const preferenceStore = opts.preferenceStore ?? mockPreferenceStore();
+  const concierge = opts.concierge ?? mockConcierge();
+  const ratingService = opts.ratingService ?? mockRatingService();
+
+  const { venueRoutes } = await import("../routes/venues.js");
+  const { slotRoutes } = await import("../routes/slots.js");
+  const { bookingRoutes } = await import("../routes/bookings.js");
+  const { healthRoutes } = await import("../routes/health.js");
+  const { preferenceRoutes } = await import("../routes/preferences.js");
+  const { conciergeRoutes } = await import("../routes/concierge.js");
+  const { ratingRoutes } = await import("../routes/ratings.js");
+  const { feedbackRoutes } = await import("../routes/feedback.js");
+  const { referralRoutes } = await import("../routes/referrals.js");
+  const { authRoutes } = await import("../routes/auth.js");
+
+  const app = Fastify({ logger: false });
+
+  // Auth route is outside the protected scope (handles its own auth)
+  await app.register(authRoutes(firebaseAuth, db), { prefix: "/api/v1" });
+
+  await app.register(
+    async (protectedScope) => {
+      // Bypass auth: inject userId/firebaseUid from Bearer token
+      protectedScope.addHook("onRequest", async (request, reply) => {
+        const authHeader = request.headers.authorization;
+        if (!authHeader?.startsWith("Bearer ")) {
+          reply.code(401).send({
+            error: { code: "UNAUTHORIZED", message: "Missing authorization" },
+          });
+          return;
+        }
+        request.userId = TEST_USER_ID;
+        request.firebaseUid = TEST_FIREBASE_UID;
+      });
+
+      await protectedScope.register(venueRoutes(db));
+      await protectedScope.register(slotRoutes(db));
+      await protectedScope.register(bookingRoutes(db));
+      await protectedScope.register(healthRoutes(db));
+      await protectedScope.register(preferenceRoutes(preferenceStore));
+      await protectedScope.register(conciergeRoutes(concierge));
+      await protectedScope.register(ratingRoutes(ratingService));
+      await protectedScope.register(feedbackRoutes(db));
+      await protectedScope.register(referralRoutes(db));
+    },
+    { prefix: "/api/v1" },
+  );
+
+  return app;
+}
+
 /** Standard auth header for test requests */
 export const authHeaders = {
   authorization: "Bearer test-token-valid",
