@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd ../.. && npx turbo run build --filter=@courtiq/venue-dashboard",
+  "buildCommand": "tsc -b && vite build",
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
