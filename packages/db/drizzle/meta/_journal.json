@@ -8,6 +8,13 @@
       "when": 1775108407830,
       "tag": "0000_overjoyed_pet_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775146251409,
+      "tag": "0001_harsh_blade",
+      "breakpoints": true
     }
   ]
 }
