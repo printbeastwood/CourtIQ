@@ -29,6 +29,7 @@
         "backgroundColor": "#0F172A"
       },
       "package": "com.courtiq.app",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
@@ -53,6 +54,12 @@
         {
           "ios": {
             "useFrameworks": "static"
+          },
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 24,
+            "buildToolsVersion": "36.1.0"
           }
         }
       ]

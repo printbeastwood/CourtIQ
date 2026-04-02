@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "958507228092",
+    "project_id": "courtiq-4c9e1",
+    "storage_bucket": "courtiq-4c9e1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:958507228092:android:68e56e76bf1f4310d469b9",
+        "android_client_info": {
+          "package_name": "com.courtiq.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDN7dQLh86gcxUiRdBv-uhrBuF0Gde12ZM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
