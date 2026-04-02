@@ -25,7 +25,7 @@ fi
 # Check if app exists
 if ! fly apps list | grep -q "$APP_NAME"; then
   echo "Creating Fly.io app: $APP_NAME in $REGION..."
-  fly apps create "$APP_NAME" --region "$REGION"
+  fly apps create "$APP_NAME"
   echo "✓ App created"
 else
   echo "✓ App $APP_NAME already exists"
@@ -57,7 +57,7 @@ if ! fly redis list 2>/dev/null | grep -q "courtiq-redis"; then
   fly redis create \
     --name courtiq-redis \
     --region "$REGION" \
-    --no-eviction
+    --disable-eviction
   echo "✓ Redis created"
   echo ""
   echo "NOTE: Manually set REDIS_URL secret after creation:"
@@ -96,7 +96,7 @@ echo "=============================="
 echo "  Deploying..."
 echo "=============================="
 echo ""
-fly deploy --app "$APP_NAME" --region "$REGION"
+fly deploy --app "$APP_NAME"
 
 echo ""
 echo "=============================="
