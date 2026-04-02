@@ -32,8 +32,6 @@
       "expo-router",
       "expo-secure-store",
       "expo-location",
-      "@react-native-firebase/app",
-      "@react-native-firebase/auth",
       [
         "expo-splash-screen",
         {
@@ -43,11 +41,16 @@
         }
       ]
     ],
+    "extra": {
+      "apiUrl": "https://courtiq-api.fly.dev/api/v1",
+      "wsUrl": "wss://courtiq-api.fly.dev/api/v1/concierge/ws"
+    },
     "web": {
       "favicon": "./assets/icon.png"
     },
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "newArchEnabled": true
   }
 }

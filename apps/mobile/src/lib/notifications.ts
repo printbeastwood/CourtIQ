@@ -78,7 +78,7 @@ export function useNotificationListeners() {
       Notifications.addNotificationReceivedListener((notification) => {
         // Update badge count if needed
         const badge = notification.request.content.badge;
-        if (badge !== undefined) {
+        if (badge != null) {
           Notifications.setBadgeCountAsync(badge);
         }
       });
@@ -107,14 +107,10 @@ export function useNotificationListeners() {
     return () => {
       tokenSub.remove();
       if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(
-          notificationListener.current,
-        );
+        notificationListener.current.remove();
       }
       if (responseListener.current) {
-        Notifications.removeNotificationSubscription(
-          responseListener.current,
-        );
+        responseListener.current.remove();
       }
     };
   }, [userId, router]);
