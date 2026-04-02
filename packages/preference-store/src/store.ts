@@ -7,26 +7,43 @@ import type {
   PreferenceMatch,
 } from "@courtiq/shared";
 import type { EmbeddingProvider } from "./embeddings.js";
-import { parsePreferences, type ParsedPreference } from "./parser.js";
+import {
+  parsePreferences,
+  createAnthropicClassifier,
+  type ParsedPreference,
+  type LLMClassifier,
+} from "./parser.js";
 
 export interface PreferenceStoreConfig {
   db: Db;
   documentEmbedder: EmbeddingProvider;
   queryEmbedder: EmbeddingProvider;
-  anthropicApiKey: string;
+  /** Preferred: pass a pre-built classifier (works with any LLM provider) */
+  classifier?: LLMClassifier;
+  /** Backwards-compatible: pass an Anthropic API key to auto-create a classifier */
+  anthropicApiKey?: string;
 }
 
 export class PreferenceStore {
   private db: Db;
   private documentEmbedder: EmbeddingProvider;
   private queryEmbedder: EmbeddingProvider;
-  private anthropicApiKey: string;
+  private classifier: LLMClassifier;
 
   constructor(config: PreferenceStoreConfig) {
     this.db = config.db;
     this.documentEmbedder = config.documentEmbedder;
     this.queryEmbedder = config.queryEmbedder;
-    this.anthropicApiKey = config.anthropicApiKey;
+
+    if (config.classifier) {
+      this.classifier = config.classifier;
+    } else if (config.anthropicApiKey) {
+      this.classifier = createAnthropicClassifier(config.anthropicApiKey);
+    } else {
+      throw new Error(
+        "PreferenceStore requires either a classifier or anthropicApiKey"
+      );
+    }
   }
 
   /**
@@ -40,7 +57,7 @@ export class PreferenceStore {
     // Step 1: Parse and categorize
     const parsed: ParsedPreference[] = await parsePreferences(
       inputs,
-      this.anthropicApiKey
+      this.classifier
     );
 
     // Step 2: Generate embeddings for all preference texts

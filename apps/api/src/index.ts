@@ -14,8 +14,11 @@ import {
   PreferenceStore,
   createVoyageProvider,
   createVoyageQueryProvider,
+  createAnthropicClassifier,
+  createOpenAIClassifier,
+  type LLMClassifier,
 } from "@courtiq/preference-store";
-import { Concierge } from "@courtiq/concierge";
+import { Concierge, createLLMProvider, type LLMProvider, type ProviderConfig } from "@courtiq/concierge";
 import { initFirebase } from "./firebase.js";
 import { createAuthMiddleware } from "./middleware/auth.js";
 import { authRoutes } from "./routes/auth.js";
@@ -56,25 +59,74 @@ const db = createDb(DATABASE_URL);
 const firebaseAuth = initFirebase();
 const authenticate = createAuthMiddleware(firebaseAuth, db);
 
-// Initialize preference store (optional — gracefully skips if keys missing)
-let preferenceStore: PreferenceStore | null = null;
+// --- LLM provider resolution ---
+// Reads LLM_PROVIDER env var and the matching API key.
+// Falls back to Anthropic when no explicit provider is set.
+const LLM_PROVIDER = process.env["LLM_PROVIDER"] ?? "anthropic";
 const ANTHROPIC_API_KEY = process.env["ANTHROPIC_API_KEY"];
 const VOYAGE_API_KEY = process.env["VOYAGE_API_KEY"];
+const GROQ_API_KEY = process.env["GROQ_API_KEY"];
+const TOGETHER_API_KEY = process.env["TOGETHER_API_KEY"];
+const OPENROUTER_API_KEY = process.env["OPENROUTER_API_KEY"];
 
-if (ANTHROPIC_API_KEY && VOYAGE_API_KEY) {
+const PROVIDER_KEY_MAP: Record<string, string | undefined> = {
+  anthropic: ANTHROPIC_API_KEY,
+  groq: GROQ_API_KEY,
+  together: TOGETHER_API_KEY,
+  openrouter: OPENROUTER_API_KEY,
+};
+
+const resolvedApiKey = PROVIDER_KEY_MAP[LLM_PROVIDER];
+
+let llmProvider: LLMProvider | null = null;
+let llmClassifier: LLMClassifier | null = null;
+
+if (resolvedApiKey) {
+  const providerConfig: ProviderConfig = {
+    provider: LLM_PROVIDER as ProviderConfig["provider"],
+    apiKey: resolvedApiKey,
+  };
+  llmProvider = createLLMProvider(providerConfig);
+
+  // Build a matching classifier for the preference store parser
+  if (LLM_PROVIDER === "anthropic") {
+    llmClassifier = createAnthropicClassifier(resolvedApiKey);
+  } else {
+    const PROVIDER_DEFAULTS: Record<string, { baseUrl: string; model: string }> = {
+      groq: { baseUrl: "https://api.groq.com/openai/v1", model: "llama-3.3-70b-versatile" },
+      together: { baseUrl: "https://api.together.xyz/v1", model: "meta-llama/Llama-3.3-70B-Instruct-Turbo" },
+      openrouter: { baseUrl: "https://openrouter.ai/api/v1", model: "meta-llama/llama-3.3-70b-instruct" },
+    };
+    const defaults = PROVIDER_DEFAULTS[LLM_PROVIDER];
+    if (defaults) {
+      llmClassifier = createOpenAIClassifier(resolvedApiKey, defaults.baseUrl, defaults.model);
+    }
+  }
+  console.log(`LLM provider: ${LLM_PROVIDER}`);
+} else {
+  console.log(`LLM disabled (no API key for provider "${LLM_PROVIDER}")`);
+}
+
+// Initialize preference store (optional — needs embedder keys + a classifier)
+let preferenceStore: PreferenceStore | null = null;
+
+if (llmClassifier && VOYAGE_API_KEY) {
   preferenceStore = new PreferenceStore({
     db,
     documentEmbedder: createVoyageProvider(),
     queryEmbedder: createVoyageQueryProvider(),
-    anthropicApiKey: ANTHROPIC_API_KEY,
+    classifier: llmClassifier,
   });
+} else if (llmClassifier) {
+  // Classifier available but no embedding provider — store disabled
+  console.log("Preference store disabled (VOYAGE_API_KEY required for embeddings)");
 }
 
-// Initialize concierge (requires preference store + Anthropic key)
+// Initialize concierge (requires LLM provider + preference store)
 let concierge: Concierge | null = null;
-if (ANTHROPIC_API_KEY && preferenceStore) {
+if (llmProvider && preferenceStore) {
   concierge = new Concierge({
-    anthropicApiKey: ANTHROPIC_API_KEY,
+    llmProvider,
     db,
     preferenceStore,
   });
@@ -181,7 +233,7 @@ await app.register(
       console.log("AI Concierge enabled");
     } else {
       console.log(
-        "AI Concierge disabled (ANTHROPIC_API_KEY and VOYAGE_API_KEY required)"
+        "AI Concierge disabled (LLM provider + VOYAGE_API_KEY required)"
       );
     }
   },

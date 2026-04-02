@@ -4,4 +4,10 @@ export {
   createVoyageQueryProvider,
   type EmbeddingProvider,
 } from "./embeddings.js";
-export { parsePreferences, type ParsedPreference } from "./parser.js";
+export {
+  parsePreferences,
+  createAnthropicClassifier,
+  createOpenAIClassifier,
+  type ParsedPreference,
+  type LLMClassifier,
+} from "./parser.js";
