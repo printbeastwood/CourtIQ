@@ -8,6 +8,7 @@
     "build": "expo export",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "prebuild": "expo prebuild",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/"
   },

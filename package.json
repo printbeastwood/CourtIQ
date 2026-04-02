@@ -19,7 +19,8 @@
     "setup": "bash scripts/setup.sh",
     "db:push": "cd packages/db && npx drizzle-kit push --force",
     "db:seed": "npx tsx packages/db/src/seed.ts",
-    "db:migrate": "node packages/db/dist/migrate.js"
+    "db:migrate": "node packages/db/dist/migrate.js",
+    "postinstall": "node scripts/fix-expo-hoisting.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
@@ -30,9 +31,6 @@
     "typescript": "^5.8.0",
     "typescript-eslint": "^8.0.0",
     "vitest": "^4.1.2"
-  },
-  "dependencies": {
-    "expo-calendar": "~14.0.6"
   },
   "overrides": {
     "@types/react": "~19.1.0"
