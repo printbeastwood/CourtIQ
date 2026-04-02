@@ -17,7 +17,7 @@ A step-by-step guide to deploy and demo all CourtIQ MVP features. Designed for t
 
 1. [Deploy the API to Fly.io](#1-deploy-the-api-to-flyio)
 2. [Firebase Auth Setup](#2-firebase-auth-setup)
-3. [AI Concierge Setup (Anthropic + Voyage AI)](#3-ai-concierge-setup)
+3. [AI Concierge Setup (Groq + Voyage AI)](#3-ai-concierge-setup)
 4. [Stripe Payments Setup](#4-stripe-payments-setup)
 5. [Preference Store & pgvector](#5-preference-store--pgvector)
 6. [Seed the Database](#6-seed-the-database)
@@ -181,15 +181,15 @@ fly logs --app courtiq-api | head -20
 
 ## 3. AI Concierge Setup
 
-The AI Concierge uses **Anthropic Claude** for conversation and **Voyage AI** for preference embeddings.
+The AI Concierge uses **Groq** (Llama 3.3 70B) for conversation and **Voyage AI** for preference embeddings. Groq provides fast inference at low cost — ideal for MVP testing.
 
-### 3.1 Get an Anthropic API key
+### 3.1 Get a Groq API key
 
-1. Go to [console.anthropic.com](https://console.anthropic.com/)
+1. Go to [console.groq.com](https://console.groq.com/)
 2. Sign up or log in
-3. Go to **API Keys** in the left sidebar
-4. Click **"Create Key"**
-5. Copy the key (starts with `sk-ant-`)
+3. Go to **API Keys**
+4. Click **"Create API Key"**
+5. Copy the key (starts with `gsk_`)
 
 ### 3.2 Get a Voyage AI API key
 
@@ -203,7 +203,8 @@ The AI Concierge uses **Anthropic Claude** for conversation and **Voyage AI** fo
 
 ```bash
 fly secrets set \
-  ANTHROPIC_API_KEY="sk-ant-your-key-here" \
+  LLM_PROVIDER="groq" \
+  GROQ_API_KEY="gsk_your-key-here" \
   VOYAGE_API_KEY="pa-your-key-here" \
   --app courtiq-api
 ```
@@ -603,7 +604,7 @@ Common causes:
 
 ### Concierge not responding
 
-- Check both `ANTHROPIC_API_KEY` and `VOYAGE_API_KEY` are set
+- Check `LLM_PROVIDER` is set to `groq`, `GROQ_API_KEY` and `VOYAGE_API_KEY` are set
 - Look for `"AI Concierge enabled"` in deploy logs
 - If you see `"Concierge disabled"` — one or both keys are missing
 
@@ -659,7 +660,8 @@ Then re-run the seed.
 | `FIREBASE_PROJECT_ID` | Yes | `fly secrets set` | Firebase project ID |
 | `FIREBASE_CLIENT_EMAIL` | Yes | `fly secrets set` | Firebase service account email |
 | `FIREBASE_PRIVATE_KEY` | Yes | `fly secrets set` | Firebase service account private key |
-| `ANTHROPIC_API_KEY` | For AI features | `fly secrets set` | Anthropic Claude API key |
+| `LLM_PROVIDER` | For AI features | `fly secrets set` | LLM provider (`groq` for MVP) |
+| `GROQ_API_KEY` | For AI features | `fly secrets set` | Groq API key |
 | `VOYAGE_API_KEY` | For AI features | `fly secrets set` | Voyage AI embedding API key |
 | `STRIPE_SECRET_KEY` | For payments | `fly secrets set` | Stripe test secret key |
 | `STRIPE_WEBHOOK_SECRET` | For payments | `fly secrets set` | Stripe webhook signing secret |
@@ -679,6 +681,6 @@ Then re-run the seed.
 | Venue Dashboard | Deployed on Vercel (see section 7) |
 | Firebase Console | `https://console.firebase.google.com/` |
 | Stripe Dashboard | `https://dashboard.stripe.com/` |
-| Anthropic Console | `https://console.anthropic.com/` |
+| Groq Console | `https://console.groq.com/` |
 | Voyage AI Dashboard | `https://dash.voyageai.com/` |
 | Fly.io Dashboard | `https://fly.io/dashboard` |
