@@ -40,8 +40,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    // Firebase Auth would go here — for now, call our auth endpoint
-    const res = await fetch("/api/v1/venue-auth/login", {
+    const base = import.meta.env.VITE_API_BASE_URL || "/api/v1";
+    const res = await fetch(`${base}/venue-auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
