@@ -1,4 +1,12 @@
-import type { AdapterHealth, DateRange, Region, Slot, Venue } from "./types.js";
+import type {
+  AdapterHealth,
+  DateRange,
+  MigrationCredentials,
+  MigrationData,
+  Region,
+  Slot,
+  Venue,
+} from "./types.js";
 
 export interface PlatformAdapter {
   readonly platform: string;
@@ -6,4 +14,14 @@ export interface PlatformAdapter {
   fetchAvailability(venueSourceId: string, dateRange: DateRange): Promise<{ venue: Venue; courts: { court: { name: string; surface: string; indoor: boolean; metadata: Record<string, unknown> }; slots: Omit<Slot, "id" | "courtId">[] }[] }>;
   getBookingUrl(slot: Slot): string;
   healthCheck(): Promise<AdapterHealth>;
+}
+
+export interface MigrationAdapter {
+  readonly platform: string;
+
+  /** Validate credentials before starting import. Returns true if the session is valid. */
+  validateCredentials(credentials: MigrationCredentials): Promise<boolean>;
+
+  /** Extract all available user data from the platform. */
+  extractUserData(credentials: MigrationCredentials): Promise<MigrationData>;
 }

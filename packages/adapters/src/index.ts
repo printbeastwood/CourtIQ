@@ -5,3 +5,13 @@ export { MatchiAdapter } from "./matchi/index.js";
 export { PadelMatesAdapter } from "./padel-mates/index.js";
 export { PadelSocietyAdapter } from "./padel-society/index.js";
 export { getAdapter, getAllAdapters, getAdapterPlatforms } from "./registry.js";
+
+// Migration adapters
+export {
+  PlaytomicMigrationAdapter,
+  MatchiMigrationAdapter,
+  ReclubMigrationAdapter,
+  PadelMatesMigrationAdapter,
+  getMigrationAdapter,
+  getSupportedMigrationPlatforms,
+} from "./migration/index.js";

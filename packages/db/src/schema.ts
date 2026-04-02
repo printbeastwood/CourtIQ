@@ -360,3 +360,84 @@ export const adapterHealthLog = pgTable("adapter_health_log", {
   durationMs: integer("duration_ms"),
   checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// ─── Player data migration tables ───────────────────────────────────────────
+
+export const importJobs = pgTable(
+  "import_jobs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    platform: text("platform").notNull(),
+    status: text("status").default("pending").notNull(), // pending, running, completed, failed
+    progress: integer("progress").default(0).notNull(), // 0-100
+    matchesImported: integer("matches_imported").default(0).notNull(),
+    bookingsImported: integer("bookings_imported").default(0).notNull(),
+    connectionsImported: integer("connections_imported").default(0).notNull(),
+    preferencesSeeded: integer("preferences_seeded").default(0).notNull(),
+    errorMessage: text("error_message"),
+    platformCredentials: jsonb("platform_credentials").$type<Record<string, unknown>>(),
+    summary: text("summary"), // AI-generated summary of imported play style
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_import_job_user").on(t.userId),
+    index("idx_import_job_status").on(t.status),
+  ]
+);
+
+export const matchHistory = pgTable(
+  "match_history",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    importJobId: uuid("import_job_id")
+      .references(() => importJobs.id),
+    platform: text("platform").notNull(),
+    platformMatchId: text("platform_match_id"),
+    playedAt: timestamp("played_at", { withTimezone: true }).notNull(),
+    venueName: text("venue_name"),
+    courtName: text("court_name"),
+    format: text("format"), // singles, doubles, americano
+    result: text("result"), // won, lost, draw
+    score: text("score"), // e.g. "6-4 6-3"
+    partnerNames: jsonb("partner_names").$type<string[]>().default([]),
+    opponentNames: jsonb("opponent_names").$type<string[]>().default([]),
+    durationMinutes: integer("duration_minutes"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_match_user").on(t.userId),
+    index("idx_match_played").on(t.playedAt),
+    index("idx_match_platform").on(t.platform, t.platformMatchId),
+  ]
+);
+
+export const userConnections = pgTable(
+  "user_connections",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .references(() => users.id)
+      .notNull(),
+    importJobId: uuid("import_job_id")
+      .references(() => importJobs.id),
+    platform: text("platform").notNull(),
+    platformUserId: text("platform_user_id"),
+    displayName: text("display_name").notNull(),
+    skillLevel: text("skill_level"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("idx_connection_user").on(t.userId),
+    index("idx_connection_platform").on(t.platform, t.platformUserId),
+  ]
+);

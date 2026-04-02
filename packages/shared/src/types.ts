@@ -378,3 +378,83 @@ export interface RegisterDeviceInput {
   token: string;
   platform: DevicePlatform;
 }
+
+// ─── Player data migration types ────────────────────────────────────────────
+
+export type MigrationPlatform = "playtomic" | "matchi" | "reclub" | "padel_mates";
+
+export type ImportJobStatus = "pending" | "running" | "completed" | "failed";
+
+export interface ImportJob {
+  id: string;
+  userId: string;
+  platform: MigrationPlatform;
+  status: ImportJobStatus;
+  progress: number;
+  matchesImported: number;
+  bookingsImported: number;
+  connectionsImported: number;
+  preferencesSeeded: number;
+  errorMessage?: string;
+  summary?: string;
+  startedAt?: Date;
+  completedAt?: Date;
+  createdAt: Date;
+}
+
+export interface ImportedMatch {
+  platformMatchId?: string;
+  playedAt: Date;
+  venueName?: string;
+  courtName?: string;
+  format?: "singles" | "doubles" | "americano";
+  result?: "won" | "lost" | "draw";
+  score?: string;
+  partnerNames: string[];
+  opponentNames: string[];
+  durationMinutes?: number;
+  metadata: Record<string, unknown>;
+}
+
+export interface ImportedConnection {
+  platformUserId?: string;
+  displayName: string;
+  skillLevel?: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface ImportedBooking {
+  bookedAt: Date;
+  venueName: string;
+  courtName?: string;
+  timeSlot: string; // e.g. "18:00-19:30"
+  pricePaid?: number;
+  currency?: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface ImportedPlayerProfile {
+  displayName?: string;
+  rating?: number;
+  ratingSystem?: string; // e.g. "playtomic_level", "matchi_rating"
+  preferredHand?: "left" | "right";
+  preferredPosition?: "left" | "right" | "both";
+  avatarUrl?: string;
+  memberSince?: Date;
+  metadata: Record<string, unknown>;
+}
+
+export interface MigrationData {
+  profile?: ImportedPlayerProfile;
+  matches: ImportedMatch[];
+  bookings: ImportedBooking[];
+  connections: ImportedConnection[];
+}
+
+export interface MigrationCredentials {
+  platform: MigrationPlatform;
+  email?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  cookies?: Record<string, string>;
+}

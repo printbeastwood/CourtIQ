@@ -30,8 +30,12 @@ import { feedbackRoutes } from "./routes/feedback.js";
 import { playerRoutes } from "./routes/players.js";
 import { notificationRoutes } from "./routes/notifications.js";
 import { matchRoutes } from "./routes/matches.js";
+import { importRoutes } from "./routes/import.js";
+import { reflinkRoutes } from "./routes/reflink.js";
 import { RatingService } from "@courtiq/rating-engine";
 import { NotificationService } from "./services/notifications.js";
+import { MigrationService } from "./services/migration.js";
+import { ReflinkService } from "./services/reflink.js";
 import { Redis } from "ioredis";
 
 const DATABASE_URL = process.env["DATABASE_URL"];
@@ -101,6 +105,18 @@ await app.register(websocket);
 
 // === Public routes (no auth required) ===
 await app.register(authRoutes(firebaseAuth, db), { prefix: "/api/v1" });
+
+// Migration / import routes (always available)
+const migrationService = new MigrationService({
+  db,
+  preferenceStore,
+  anthropicApiKey: ANTHROPIC_API_KEY ?? null,
+});
+await app.register(importRoutes(migrationService), { prefix: "/api/v1" });
+
+// Reflink / referral routes (public for link resolution + click tracking)
+const reflinkService = new ReflinkService(db);
+await app.register(reflinkRoutes(reflinkService), { prefix: "/api/v1" });
 
 // Root health check
 app.get("/health", async () => ({ status: "ok", service: "courtiq-api" }));
