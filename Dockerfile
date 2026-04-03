@@ -3,6 +3,7 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package.json package-lock.json .npmrc ./
+COPY scripts/ scripts/
 COPY apps/api/package.json apps/api/
 COPY packages/shared/package.json packages/shared/
 COPY packages/db/package.json packages/db/
@@ -14,6 +15,7 @@ RUN npm ci --omit=dev
 
 FROM base AS builder
 COPY package.json package-lock.json .npmrc turbo.json tsconfig.base.json ./
+COPY scripts/ scripts/
 COPY apps/api/ apps/api/
 COPY packages/ packages/
 RUN npm ci
