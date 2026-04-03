@@ -18,13 +18,15 @@ export function useConciergeWs({ onMessage }: UseConciergeWsOptions = {}) {
   const [connected, setConnected] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const userId = useAuthStore((s) => s.userId);
+  const token = useAuthStore((s) => s.token);
 
   const connect = useCallback(
     (existingConversationId?: string) => {
       if (ws.current?.readyState === WebSocket.OPEN) return;
-      if (!userId) return;
+      if (!userId || !token) return;
 
-      const socket = new WebSocket(config.wsUrl);
+      const wsUrl = `${config.wsUrl}?token=${encodeURIComponent(token)}`;
+      const socket = new WebSocket(wsUrl);
       ws.current = socket;
 
       socket.onopen = () => {
@@ -54,7 +56,7 @@ export function useConciergeWs({ onMessage }: UseConciergeWsOptions = {}) {
         setConnected(false);
       };
     },
-    [userId, onMessage],
+    [userId, token, onMessage],
   );
 
   const send = useCallback((content: string) => {

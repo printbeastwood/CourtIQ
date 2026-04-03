@@ -76,7 +76,8 @@ export function conciergeRoutes(concierge: Concierge): FastifyPluginAsync {
 
     // WebSocket endpoint for streaming chat
     app.get("/concierge/ws", { websocket: true }, (socket, request) => {
-      let userId: string | null = null;
+      // userId comes from the auth middleware (verified token), not from the client
+      const userId: string = request.userId;
       let conversationId: string | null = null;
 
       socket.on("message", async (raw: Buffer) => {
@@ -85,9 +86,8 @@ export function conciergeRoutes(concierge: Concierge): FastifyPluginAsync {
 
           switch (data.type) {
             case "init": {
-              userId = data.userId;
               if (!userId) {
-                socket.send(JSON.stringify({ type: "error", error: "userId required" }));
+                socket.send(JSON.stringify({ type: "error", error: "Authentication required" }));
                 return;
               }
               if (data.conversationId) {

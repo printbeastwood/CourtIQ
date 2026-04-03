@@ -41,14 +41,17 @@ export function createAuthMiddleware(firebaseAuth: Auth | null, db: Db) {
     }
 
     const authHeader = request.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
+    // WebSocket connections can't set headers in all clients — accept token via query param
+    const queryToken = (request.query as Record<string, string>)?.token;
+    const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    const token = bearerToken ?? queryToken;
+
+    if (!token) {
       reply.code(401).send({
         error: { code: "UNAUTHORIZED", message: "Missing or invalid authorization header" },
       });
       return;
     }
-
-    const token = authHeader.slice(7);
 
     // Try venue operator token first (HMAC-signed, cheap to verify)
     const venuePayload = verifyToken(token);
