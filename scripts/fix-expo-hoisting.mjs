@@ -28,8 +28,15 @@ if (!existsSync(mobileModules)) {
   process.exit(0);
 }
 
-// Packages that hoisted expo/RN plugins need at root
-const packages = ["expo", "@expo/config-plugins", "@expo/config"];
+// Packages that hoisted expo/RN plugins need at root.
+// react-native is needed by nativewind/react-native-css-interop (hoisted)
+// which require react-native/package.json at resolution time.
+const packages = [
+  "expo",
+  "@expo/config-plugins",
+  "@expo/config",
+  "react-native",
+];
 
 let linked = 0;
 
