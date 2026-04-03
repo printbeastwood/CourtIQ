@@ -36,6 +36,7 @@ const packages = [
   "@expo/config-plugins",
   "@expo/config",
   "react-native",
+  "react-native-svg",
 ];
 
 let linked = 0;

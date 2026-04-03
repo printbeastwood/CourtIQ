@@ -16,4 +16,10 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, "node_modules"),
 ];
 
+// Force native modules to a single copy, preventing duplicate
+// native view registrations in monorepo setups
+config.resolver.extraNodeModules = {
+  "react-native-svg": require.resolve("react-native-svg/package.json").replace("/package.json", ""),
+};
+
 module.exports = withNativeWind(config, { input: "./global.css" });
